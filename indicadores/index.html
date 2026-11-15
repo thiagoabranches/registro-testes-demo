@@ -1,0 +1,881 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Painel de indicadores · registro de testes rápidos</title>
+<style>
+:root{--bg:#fff;--tx:#17262b;--mut:#5b6e73;--card:#eef5f5;--bd:#d3e2e3;--pri:#0e7c86;--pri-tx:#fff;--dk:#0b3b44;--c1:#0e7c86;--c2:#e08e1b;--c3:#2e5e8c;--c4:#b3392a}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1a1d;--tx:#e6eff0;--mut:#9bb0b4;--card:#162428;--bd:#27393e;--pri:#3fb3bd;--pri-tx:#06242a;--dk:#cfe9ec;--c1:#3fb3bd;--c2:#f2b04a;--c3:#6fa3d8;--c4:#ff8f7e}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+.w{max-width:1060px;margin:0 auto;padding:0 16px}
+header{padding:22px 0 8px}
+h1{font:700 28px/1.2 Georgia,"Times New Roman",serif;color:var(--dk);margin:0 0 4px}
+h2{font:700 18px/1.3 Georgia,serif;color:var(--dk);margin:0 0 8px}
+.tag{display:inline-block;background:#f2a33a;color:#1b2b30;font-weight:700;font-size:12px;padding:2px 9px;border-radius:999px}
+.mut{color:var(--mut)}
+a{color:var(--pri)}
+.barra{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin:14px 0}
+label{font-size:13px;font-weight:600;display:block;margin-bottom:3px}
+select,input[type=file]{font:inherit;padding:6px 8px;border:1.5px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx)}
+button{font:600 14px system-ui,sans-serif;padding:8px 14px;border-radius:8px;border:0;background:var(--pri);color:var(--pri-tx);cursor:pointer}
+button.alt{background:transparent;color:var(--pri);border:1.5px solid var(--pri)}
+.kpis{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin:8px 0 18px}
+.kpi{background:var(--card);border-radius:12px;padding:12px 14px}
+.kpi b{display:block;font:700 28px/1.1 Georgia,serif;color:var(--dk)}
+.kpi span{font-size:13px;color:var(--mut)}
+.painel{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(420px,1fr))}
+@media (max-width:520px){.painel{grid-template-columns:1fr}}
+.card{background:var(--card);border-radius:12px;padding:14px 16px}
+.hb{display:grid;grid-template-columns:130px 1fr 64px;gap:8px;align-items:center;margin:5px 0;font-size:14px}
+.hb .t{background:var(--bd);border-radius:5px;height:18px;overflow:hidden}.hb .t i{display:block;height:100%;background:var(--c1);border-radius:5px}
+.hb .v{text-align:right;font-variant-numeric:tabular-nums}
+.leg{display:flex;flex-wrap:wrap;gap:12px;font-size:13px;margin:4px 0 6px}.leg i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+svg{width:100%;height:auto;display:block}svg text{fill:var(--tx);font:12px system-ui,sans-serif}svg .m{fill:var(--mut)}
+.tw{overflow-x:auto;margin-top:8px}table{border-collapse:collapse;width:100%;font-size:13px}th,td{border-bottom:1px solid var(--bd);padding:5px 8px;text-align:right;white-space:nowrap}th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left}th{color:var(--mut);font-weight:600}
+.aviso{background:var(--card);border-radius:10px;padding:10px 14px;font-size:13px;color:var(--mut);margin:14px 0}
+footer{padding:20px 0 40px;font-size:13px;color:var(--mut)}
+</style>
+</head>
+<body>
+<div class="w">
+<header>
+  <span class="tag" id="tag">Dados fictícios de exemplo</span>
+  <h1>Painel de indicadores</h1>
+  <div class="mut">Registro eletrônico de testes rápidos · <a href="../">voltar à demonstração</a></div>
+</header>
+<div class="barra">
+  <div><label for="fmat">Material</label><select id="fmat"></select></div>
+  <div><label for="fde">De</label><select id="fde"></select></div>
+  <div><label for="fate">Até</label><select id="fate"></select></div>
+  <div><label for="arq">Carregar meu CSV (fica só no navegador)</label><input type="file" id="arq" accept=".csv,text/csv"></div>
+  <button class="alt" id="bresumo">Baixar resumo mensal (CSV)</button>
+</div>
+<div class="kpis" id="kpis" aria-live="polite"></div>
+<div class="painel">
+  <div class="card"><h2>Testes por mês</h2><div class="leg" id="leg1"></div><div id="g1"></div></div>
+  <div class="card"><h2>Positividade por material</h2><div class="mut" style="font-size:13px;margin-bottom:6px">% de reagentes entre os testes com resultado</div><div id="g2"></div></div>
+  <div class="card"><h2>Faixa etária</h2><div id="g3"></div></div>
+  <div class="card"><h2>Tempo até a baixa</h2><div class="mut" style="font-size:13px;margin-bottom:6px">Dias entre o teste e a baixa no GSS</div><div id="g4"></div></div>
+  <div class="card"><h2>Por posto</h2><div id="g5"></div></div>
+  <div class="card"><h2>Situação dos registros</h2><div id="g6"></div></div>
+</div>
+<div class="card" style="margin-top:14px"><h2>Resumo mensal por material</h2><div class="tw"><table id="tab"></table></div></div>
+<div class="aviso">O painel é calculado inteiramente no seu navegador a partir do CSV "registros anonimos" exportado pelo sistema. Nenhum arquivo é enviado a servidores. Com poucos registros, percentuais variam muito: leia sempre junto do número de testes (n).</div>
+<footer>Autor: Thiago Abranches · CRF-SP 91811. Dados de exemplo gerados artificialmente.</footer>
+</div>
+<script type="text/csv" id="amostra">id_anonimo;data_teste;ano_mes;material;lote;caixa;faixa_etaria;tipo_doc;documento_valido;resultado_1;resultado_2;fez_2o_teste;origem_informada;situacao;baixado;data_baixa;dias_ate_baixa;posto
+fad43412;2026-06-01;2026-06;Teste COVID-19 (antígeno);COV2606A;38966e;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-04;3;PC-ENF-03
+6ba800b8;2026-06-01;2026-06;Teste COVID-19 (antígeno);COV2606A;38966e;10 a 14;CPF;sim;NR;;nao;nao;Baixado;sim;2026-06-06;5;PC-ENF-02
+646d55f4;2026-06-01;2026-06;Teste COVID-19 (antígeno);COV2606A;38966e;10 a 14;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-01;0;PC-ENF-01
+550a06ba;2026-06-01;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606A;3a37df;5 a 9;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-02;1;PC-ENF-02
+c1a566a9;2026-06-01;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606B;bae1ca;15 a 19;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-02;1;PC-ENF-01
+2bc21101;2026-06-01;2026-06;Teste influenza A e B;INF2606A;4a4aca;5 a 9;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-01;0;PC-ENF-01
+5d8b7834;2026-06-01;2026-06;Teste influenza A e B;INF2606B;7dc78d;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-01;0;PC-ENF-02
+e46f1646;2026-06-02;2026-06;Teste COVID-19 (antígeno);COV2606A;38966e;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-03;1;PC-ENF-01
+ae91b3f3;2026-06-02;2026-06;Teste COVID-19 (antígeno);COV2606A;38966e;20 a 29;CNS;sim;Reagente;NR;sim;sim;Baixado;sim;2026-06-04;2;PC-ENF-01
+bc60cb4b;2026-06-02;2026-06;Teste COVID-19 (antígeno);COV2606A;38966e;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-03;1;PC-ENF-01
+a5391d2c;2026-06-02;2026-06;Teste COVID-19 (antígeno);COV2606A;38966e;5 a 9;CNS;sim;NR;;nao;sim;Baixado;sim;2026-06-04;2;PC-ENF-02
+16e12aaa;2026-06-02;2026-06;Teste COVID-19 (antígeno);COV2606A;38966e;20 a 29;CPF;sim;NR;;nao;nao;Baixado;sim;2026-06-02;0;PC-ENF-01
+8cfd3c78;2026-06-02;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606A;3a37df;5 a 9;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-05;3;PC-ENF-02
+c15f40b3;2026-06-02;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606B;bae1ca;5 a 9;CNS;sim;NR;;nao;sim;Baixado;sim;2026-06-04;2;PC-ENF-02
+32b736ac;2026-06-02;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606B;bae1ca;40 a 49;CPF;sim;NR;;nao;nao;Baixado;sim;2026-06-02;0;PC-ENF-02
+b89e41a7;2026-06-02;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606C;b26034;40 a 49;CNS;sim;NR;;nao;sim;Baixado;sim;2026-06-07;5;PC-ENF-02
+a8979caf;2026-06-02;2026-06;Teste influenza A e B;INF2606A;4a4aca;30 a 39;CNS;sim;NR;;nao;sim;Baixado;sim;2026-06-02;0;PC-ENF-02
+85d49a00;2026-06-02;2026-06;Teste influenza A e B;INF2606B;7dc78d;1 a 4;CPF;sim;NR;;nao;nao;Baixado;sim;2026-06-02;0;PC-ENF-03
+7fed925f;2026-06-03;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606A;3a37df;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-04;1;PC-ENF-03
+cb2749f4;2026-06-03;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606A;3a37df;15 a 19;CPF;sim;NR;;nao;nao;Baixado;sim;2026-06-04;1;PC-ENF-01
+d678c03d;2026-06-03;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606A;3a37df;15 a 19;CNS;sim;Reagente;;nao;sim;Baixado;sim;2026-06-03;0;PC-ENF-02
+2a00f20d;2026-06-03;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606B;bae1ca;5 a 9;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-07;4;PC-ENF-02
+e3edd70a;2026-06-03;2026-06;Teste influenza A e B;INF2606A;4a4aca;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-04;1;PC-ENF-01
+2a1e502d;2026-06-03;2026-06;Teste influenza A e B;INF2606A;4a4aca;30 a 39;CPF;sim;NR;;nao;nao;Baixado;sim;2026-06-04;1;PC-ENF-03
+f5936eae;2026-06-03;2026-06;Teste influenza A e B;INF2606B;7dc78d;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-07;4;PC-ENF-01
+c8c856af;2026-06-03;2026-06;Teste influenza A e B;INF2606B;7dc78d;20 a 29;CPF;sim;NR;;nao;sim;Baixado;sim;2026-06-04;1;PC-ENF-01
+946a463b;2026-06-04;2026-06;Benzilpenicilina benzatina 1.200.000 UI;BEN2606A;b2cbd3;70 ou mais;CNS;sim;;;nao;nao;Baixado;sim;2026-06-07;3;PC-ENF-02
+a37fa581;2026-06-04;2026-06;Benzilpenicilina benzatina 1.200.000 UI;BEN2606A;b2cbd3;50 a 59;CNS;sim;;;nao;nao;Baixado;sim;2026-06-06;2;PC-ENF-01
+bee92208;2026-06-04;2026-06;Benzilpenicilina benzatina 1.200.000 UI;BEN2606A;b2cbd3;40 a 49;CNS;sim;;;nao;nao;Baixado;sim;2026-06-05;1;PC-ENF-03
+56808169;2026-06-04;2026-06;Teste COVID-19 (antígeno);COV2606A;38966e;5 a 9;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-04;0;PC-ENF-01
+eddcb157;2026-06-04;2026-06;Teste COVID-19 (antígeno);COV2606A;38966e;40 a 49;CPF;sim;NR;;nao;nao;Baixado;sim;2026-06-04;0;PC-ENF-01
+687b2fd2;2026-06-04;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606A;3a37df;10 a 14;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-08;4;PC-ENF-03
+d9998aba;2026-06-04;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606A;3a37df;20 a 29;CPF;sim;NR;;nao;nao;Baixado;sim;2026-06-06;2;PC-ENF-02
+364c9a2f;2026-06-04;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606B;bae1ca;20 a 29;CNS;sim;NR;;nao;sim;Baixado;sim;2026-06-05;1;PC-ENF-02
+e243c2f9;2026-06-04;2026-06;Teste influenza A e B;INF2606B;7dc78d;40 a 49;CNS;sim;NR;;nao;sim;Baixado;sim;2026-06-05;1;PC-ENF-02
+de4f0564;2026-06-05;2026-06;Teste COVID-19 (antígeno);COV2606A;38966e;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-06;1;PC-ENF-03
+9023c684;2026-06-05;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606A;3a37df;5 a 9;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-06;1;PC-ENF-01
+72923318;2026-06-05;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606B;bae1ca;50 a 59;CPF;sim;NR;;nao;nao;Baixado;sim;2026-06-06;1;PC-ENF-01
+a2ac4f0d;2026-06-05;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606C;b26034;50 a 59;CNS;sim;Reagente;NR;sim;nao;Baixado;sim;2026-06-11;6;PC-ENF-01
+4a265a1b;2026-06-05;2026-06;Teste influenza A e B;INF2606A;4a4aca;30 a 39;CNS;sim;NR;;nao;sim;Baixado;sim;2026-06-05;0;PC-ENF-01
+d50e0b65;2026-06-05;2026-06;Teste influenza A e B;INF2606B;7dc78d;10 a 14;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-05;0;PC-ENF-02
+d9f53c86;2026-06-05;2026-06;Teste influenza A e B;INF2606B;7dc78d;30 a 39;CPF;sim;NR;;nao;nao;Baixado;sim;2026-06-06;1;PC-ENF-01
+797169c4;2026-06-08;2026-06;Benzilpenicilina benzatina 1.200.000 UI;BEN2606A;b2cbd3;50 a 59;CPF;sim;;;nao;nao;Baixado;sim;2026-06-08;0;PC-ENF-01
+0fd028dc;2026-06-08;2026-06;Benzilpenicilina benzatina 1.200.000 UI;BEN2606A;b2cbd3;40 a 49;CNS;sim;;;nao;nao;Baixado;sim;2026-06-09;1;PC-ENF-02
+bd3680e1;2026-06-08;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606B;bae1ca;40 a 49;CNS;sim;Reagente;;nao;nao;Baixado;sim;2026-06-09;1;PC-ENF-01
+0dc1fe82;2026-06-08;2026-06;Teste influenza A e B;INF2606A;4a4aca;15 a 19;CPF;sim;NR;;nao;sim;Baixado;sim;2026-06-10;2;PC-ENF-03
+d1f8d337;2026-06-08;2026-06;Teste influenza A e B;INF2606B;7dc78d;30 a 39;CNS;sim;NR;;nao;sim;Baixado;sim;2026-06-10;2;PC-ENF-02
+eaf50672;2026-06-09;2026-06;Teste COVID-19 (antígeno);COV2606A;38966e;10 a 14;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-14;5;PC-ENF-03
+efdeab50;2026-06-09;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606A;3a37df;30 a 39;CPF;sim;NR;;nao;nao;Baixado;sim;2026-06-12;3;PC-ENF-01
+a1e59348;2026-06-09;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606A;3a37df;30 a 39;CPF;sim;NR;;nao;nao;Baixado;sim;2026-06-12;3;PC-ENF-01
+4816bde8;2026-06-09;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606A;3a37df;5 a 9;CNS;sim;NR;;nao;sim;Baixado;sim;2026-06-11;2;PC-ENF-01
+1bc7e8a7;2026-06-09;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606C;b26034;40 a 49;CNS;sim;Inválido;;nao;sim;Baixado;sim;2026-06-09;0;PC-ENF-02
+2cc459c9;2026-06-09;2026-06;Teste influenza A e B;INF2606A;4a4aca;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-09;0;PC-ENF-02
+3c96910a;2026-06-09;2026-06;Teste influenza A e B;INF2606A;4a4aca;40 a 49;CPF;sim;NR;;nao;sim;Baixado;sim;2026-06-09;0;PC-ENF-01
+84f70c68;2026-06-09;2026-06;Teste influenza A e B;INF2606B;7dc78d;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-09;0;PC-ENF-02
+536e0d30;2026-06-09;2026-06;Teste influenza A e B;INF2606B;7dc78d;40 a 49;CNS;sim;NR;;nao;sim;Baixado;sim;2026-06-09;0;PC-ENF-02
+d31c4413;2026-06-10;2026-06;Benzilpenicilina benzatina 1.200.000 UI;BEN2606A;b2cbd3;40 a 49;CNS;sim;;;nao;nao;Baixado;sim;2026-06-10;0;PC-ENF-03
+9e25b1d7;2026-06-10;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606B;bae1ca;70 ou mais;CPF;sim;NR;;nao;nao;Baixado;sim;2026-06-11;1;PC-ENF-03
+14c1999d;2026-06-10;2026-06;Teste influenza A e B;INF2606A;4a4aca;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-16;6;PC-ENF-03
+a98862f6;2026-06-11;2026-06;Teste COVID-19 (antígeno);COV2606A;38966e;70 ou mais;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-11;0;PC-ENF-02
+631df8c5;2026-06-11;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606A;3a37df;30 a 39;CPF;sim;NR;;nao;nao;Baixado;sim;2026-06-14;3;PC-ENF-03
+fa7e0891;2026-06-11;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606C;b26034;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-14;3;PC-ENF-02
+c528c07a;2026-06-11;2026-06;Teste influenza A e B;INF2606A;4a4aca;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-12;1;PC-ENF-02
+1f1cc543;2026-06-11;2026-06;Teste influenza A e B;INF2606A;4a4aca;30 a 39;CPF;sim;NR;;nao;nao;Baixado;sim;2026-06-11;0;PC-ENF-02
+a0bef20a;2026-06-11;2026-06;Teste influenza A e B;INF2606B;7dc78d;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-11;0;PC-ENF-03
+feddf663;2026-06-12;2026-06;Benzilpenicilina benzatina 1.200.000 UI;BEN2606A;b2cbd3;30 a 39;CPF;sim;;;nao;nao;Baixado;sim;2026-06-13;1;PC-ENF-01
+685a1cc9;2026-06-12;2026-06;Benzilpenicilina benzatina 1.200.000 UI;BEN2606A;b2cbd3;20 a 29;CPF;sim;;;nao;nao;Baixado;sim;2026-06-14;2;PC-ENF-03
+76ee81a4;2026-06-12;2026-06;Teste COVID-19 (antígeno);COV2606A;38966e;60 a 69;CPF;sim;Inválido;;nao;sim;Baixado;sim;2026-06-12;0;PC-ENF-01
+bb5d7d16;2026-06-12;2026-06;Teste COVID-19 (antígeno);COV2606A;38966e;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-13;1;PC-ENF-01
+02859d7f;2026-06-12;2026-06;Teste COVID-19 (antígeno);COV2606A;38966e;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-12;0;PC-ENF-01
+e19a4b82;2026-06-15;2026-06;Benzilpenicilina benzatina 1.200.000 UI;BEN2606A;b2cbd3;20 a 29;CNS;sim;;;nao;nao;Baixado;sim;2026-06-15;0;PC-ENF-02
+ad18b668;2026-06-15;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606A;3a37df;20 a 29;CPF;sim;Reagente;;nao;nao;Baixado;sim;2026-06-17;2;PC-ENF-02
+64738561;2026-06-15;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606B;bae1ca;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-18;3;PC-ENF-01
+8b6e2957;2026-06-15;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606B;bae1ca;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-15;0;PC-ENF-01
+3be3d948;2026-06-15;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606B;bae1ca;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-15;0;PC-ENF-02
+4e19fc9e;2026-06-15;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606C;b26034;5 a 9;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-17;2;PC-ENF-02
+2fdbefa2;2026-06-15;2026-06;Teste influenza A e B;INF2606B;7dc78d;15 a 19;CPF;sim;NR;;nao;nao;Baixado;sim;2026-06-18;3;PC-ENF-02
+898203a8;2026-06-16;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606A;3a37df;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-16;0;PC-ENF-01
+5eeec650;2026-06-16;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606B;bae1ca;40 a 49;CPF;sim;Reagente;;nao;nao;Baixado;sim;2026-06-18;2;PC-ENF-01
+842ca10a;2026-06-16;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606B;bae1ca;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-16;0;PC-ENF-02
+d1a84d7d;2026-06-16;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606B;bae1ca;30 a 39;CPF;sim;NR;;nao;nao;Baixado;sim;2026-06-20;4;PC-ENF-01
+daccc3c9;2026-06-16;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606B;bae1ca;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-16;0;PC-ENF-01
+92beee1f;2026-06-16;2026-06;Teste influenza A e B;INF2606A;4a4aca;5 a 9;CNS;sim;NR;;nao;sim;Baixado;sim;2026-06-17;1;PC-ENF-03
+41b9737d;2026-06-16;2026-06;Teste influenza A e B;INF2606A;4a4aca;30 a 39;CNS;sim;NR;;nao;sim;Baixado;sim;2026-06-16;0;PC-ENF-03
+ba49c25f;2026-06-16;2026-06;Teste influenza A e B;INF2606B;7dc78d;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-16;0;PC-ENF-01
+0f8a2fc4;2026-06-17;2026-06;Benzilpenicilina benzatina 1.200.000 UI;BEN2606A;b2cbd3;30 a 39;CNS;sim;;;nao;nao;Baixado;sim;2026-06-17;0;PC-ENF-01
+2ca3be06;2026-06-17;2026-06;Benzilpenicilina benzatina 1.200.000 UI;BEN2606A;b2cbd3;30 a 39;CNS;sim;;;nao;nao;Baixado;sim;2026-06-17;0;PC-ENF-01
+e1bba55d;2026-06-17;2026-06;Benzilpenicilina benzatina 1.200.000 UI;BEN2606A;b2cbd3;50 a 59;CNS;sim;;;nao;nao;Baixado;sim;2026-06-19;2;PC-ENF-02
+57c5cf78;2026-06-17;2026-06;Teste COVID-19 (antígeno);COV2606A;38966e;1 a 4;CNS;nao;NR;;nao;nao;Baixado;sim;2026-06-22;5;PC-ENF-01
+775a36e3;2026-06-17;2026-06;Teste COVID-19 (antígeno);COV2606A;38966e;50 a 59;CNS;sim;Reagente;;nao;nao;Baixado;sim;2026-06-17;0;PC-ENF-02
+29d23928;2026-06-17;2026-06;Teste COVID-19 (antígeno);COV2606A;38966e;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-19;2;PC-ENF-03
+4943703c;2026-06-17;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606A;3a37df;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-19;2;PC-ENF-02
+4cfad98b;2026-06-17;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606B;bae1ca;30 a 39;CNS;sim;NR;;nao;nao;Não encontrado no GSS;nao;;;PC-ENF-03
+2f25ff89;2026-06-17;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606C;b26034;20 a 29;CPF;sim;NR;;nao;sim;Baixado;sim;2026-06-17;0;PC-ENF-01
+3c0e8f36;2026-06-17;2026-06;Teste influenza A e B;INF2606A;4a4aca;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-17;0;PC-ENF-01
+ca01c582;2026-06-17;2026-06;Teste influenza A e B;INF2606A;4a4aca;40 a 49;CNS;sim;NR;;nao;sim;Baixado;sim;2026-06-17;0;PC-ENF-01
+82075644;2026-06-17;2026-06;Teste influenza A e B;INF2606B;7dc78d;20 a 29;CNS;sim;Reagente;Reagente;sim;sim;Baixado;sim;2026-06-17;0;PC-ENF-01
+6cdfe54f;2026-06-18;2026-06;Benzilpenicilina benzatina 1.200.000 UI;BEN2606A;b2cbd3;70 ou mais;CNS;sim;;;nao;nao;Baixado;sim;2026-06-20;2;PC-ENF-02
+b5aeaeff;2026-06-18;2026-06;Benzilpenicilina benzatina 1.200.000 UI;BEN2606A;b2cbd3;50 a 59;CNS;sim;;;nao;nao;Baixado;sim;2026-06-19;1;PC-ENF-01
+8049aaa0;2026-06-18;2026-06;Teste COVID-19 (antígeno);COV2606A;38966e;40 a 49;CPF;sim;NR;;nao;nao;Baixado;sim;2026-06-23;5;PC-ENF-02
+2d1a7595;2026-06-18;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606A;3a37df;1 a 4;CNS;sim;NR;;nao;sim;Baixado;sim;2026-06-19;1;PC-ENF-02
+29fe8878;2026-06-18;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606B;bae1ca;40 a 49;CPF;sim;Inválido;;nao;nao;Baixado;sim;2026-06-21;3;PC-ENF-01
+7c9bb6e1;2026-06-18;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606B;bae1ca;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-21;3;PC-ENF-01
+d0ec9503;2026-06-18;2026-06;Teste influenza A e B;INF2606B;7dc78d;50 a 59;CPF;sim;NR;;nao;nao;Baixado;sim;2026-06-23;5;PC-ENF-03
+8e37ad33;2026-06-19;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606B;bae1ca;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-22;3;PC-ENF-01
+8c6534f0;2026-06-19;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606C;b26034;1 a 4;CNS;sim;NR;;nao;sim;Baixado;sim;2026-06-19;0;PC-ENF-02
+e938e7f1;2026-06-19;2026-06;Teste influenza A e B;INF2606A;4a4aca;60 a 69;CNS;sim;Reagente;NR;sim;sim;Baixado;sim;2026-06-24;5;PC-ENF-03
+a99a901b;2026-06-19;2026-06;Teste influenza A e B;INF2606A;4a4aca;60 a 69;CNS;sim;Reagente;;nao;nao;Baixado;sim;2026-06-22;3;PC-ENF-02
+5a527fb9;2026-06-19;2026-06;Teste influenza A e B;INF2606B;7dc78d;5 a 9;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-20;1;PC-ENF-02
+3453fb4d;2026-06-19;2026-06;Teste influenza A e B;INF2606B;7dc78d;30 a 39;CPF;sim;NR;;nao;nao;Baixado;sim;2026-06-23;4;PC-ENF-02
+3297fc13;2026-06-19;2026-06;Teste influenza A e B;INF2606B;7dc78d;60 a 69;CPF;sim;NR;;nao;nao;Baixado;sim;2026-06-19;0;PC-ENF-01
+30fe97b5;2026-06-22;2026-06;Benzilpenicilina benzatina 1.200.000 UI;BEN2606A;b2cbd3;40 a 49;CPF;sim;;;nao;nao;Não encontrado no GSS;nao;;;PC-ENF-01
+3c400f7e;2026-06-22;2026-06;Teste COVID-19 (antígeno);COV2606A;38966e;1 a 4;CPF;sim;NR;;nao;nao;Baixado;sim;2026-06-23;1;PC-ENF-02
+a3df14cc;2026-06-22;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606A;3a37df;40 a 49;CPF;sim;NR;;nao;nao;Baixado;sim;2026-06-26;4;PC-ENF-01
+5e47f2cc;2026-06-22;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606A;3a37df;70 ou mais;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-23;1;PC-ENF-02
+14e485aa;2026-06-22;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606A;3a37df;30 a 39;CPF;sim;NR;;nao;sim;Baixado;sim;2026-06-27;5;PC-ENF-02
+91f313f4;2026-06-22;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606A;3a37df;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-23;1;PC-ENF-01
+a9068698;2026-06-22;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606B;bae1ca;10 a 14;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-23;1;PC-ENF-03
+1047cfda;2026-06-22;2026-06;Teste influenza A e B;INF2606A;4a4aca;20 a 29;CPF;sim;NR;;nao;nao;Baixado;sim;2026-06-24;2;PC-ENF-01
+33f521aa;2026-06-22;2026-06;Teste influenza A e B;INF2606B;7dc78d;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-22;0;PC-ENF-01
+09ebd026;2026-06-23;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606A;3a37df;10 a 14;CPF;sim;NR;;nao;nao;Baixado;sim;2026-06-24;1;PC-ENF-02
+85bb6874;2026-06-23;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606A;3a37df;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-25;2;PC-ENF-01
+afb5b126;2026-06-23;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606B;bae1ca;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-23;0;PC-ENF-01
+6ab7d955;2026-06-23;2026-06;Teste influenza A e B;INF2606A;4a4aca;15 a 19;CPF;sim;Reagente;NR;sim;nao;Baixado;sim;2026-06-23;0;PC-ENF-02
+8d3596c2;2026-06-23;2026-06;Teste influenza A e B;INF2606A;4a4aca;5 a 9;CNS;sim;NR;;nao;sim;Baixado;sim;2026-06-25;2;PC-ENF-01
+cfafa47d;2026-06-24;2026-06;Benzilpenicilina benzatina 1.200.000 UI;BEN2606A;b2cbd3;30 a 39;CNS;sim;;;nao;nao;Baixado;sim;2026-06-25;1;PC-ENF-02
+34b12274;2026-06-24;2026-06;Teste COVID-19 (antígeno);COV2606A;38966e;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-26;2;PC-ENF-01
+93b289e2;2026-06-24;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606B;bae1ca;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-25;1;PC-ENF-03
+bf511732;2026-06-24;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606B;bae1ca;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-24;0;PC-ENF-02
+050222e1;2026-06-24;2026-06;Teste influenza A e B;INF2606B;7dc78d;15 a 19;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-24;0;PC-ENF-02
+884362b7;2026-06-25;2026-06;Benzilpenicilina benzatina 1.200.000 UI;BEN2606A;b2cbd3;50 a 59;CNS;sim;;;nao;nao;Baixado;sim;2026-06-25;0;PC-ENF-01
+30241138;2026-06-25;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606A;3a37df;15 a 19;CNS;nao;NR;;nao;sim;A revisar;nao;;;PC-ENF-03
+8cf99bc0;2026-06-25;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606B;bae1ca;5 a 9;CNS;sim;NR;;nao;sim;Baixado;sim;2026-06-27;2;PC-ENF-01
+53f7833b;2026-06-25;2026-06;Teste influenza A e B;INF2606A;4a4aca;20 a 29;CPF;sim;NR;;nao;sim;Baixado;sim;2026-06-26;1;PC-ENF-01
+ca80dab8;2026-06-26;2026-06;Benzilpenicilina benzatina 1.200.000 UI;BEN2606A;b2cbd3;20 a 29;CPF;sim;;;nao;nao;Baixado;sim;2026-06-27;1;PC-ENF-02
+e36e74bf;2026-06-26;2026-06;Teste COVID-19 (antígeno);COV2606A;38966e;70 ou mais;CPF;sim;NR;;nao;sim;Baixado;sim;2026-06-26;0;PC-ENF-01
+8f57db4a;2026-06-26;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606B;bae1ca;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-28;2;PC-ENF-01
+8154d235;2026-06-26;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606C;b26034;5 a 9;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-28;2;PC-ENF-03
+c19fec02;2026-06-26;2026-06;Teste influenza A e B;INF2606A;4a4aca;20 a 29;CNS;sim;NR;;nao;sim;Baixado;sim;2026-06-29;3;PC-ENF-02
+9461ea8b;2026-06-29;2026-06;Teste COVID-19 (antígeno);COV2606A;38966e;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-29;0;PC-ENF-01
+1a0bc458;2026-06-29;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606A;3a37df;20 a 29;CNS;sim;NR;;nao;sim;Baixado;sim;2026-06-30;1;PC-ENF-02
+7f6761ee;2026-06-29;2026-06;Teste influenza A e B;INF2606A;4a4aca;30 a 39;CPF;sim;Reagente;Reagente;sim;nao;Baixado;sim;2026-07-02;3;PC-ENF-02
+3009e17c;2026-06-29;2026-06;Teste influenza A e B;INF2606B;7dc78d;40 a 49;CNS;sim;NR;;nao;sim;Baixado;sim;2026-06-29;0;PC-ENF-01
+5617a0bd;2026-06-29;2026-06;Teste influenza A e B;INF2606B;7dc78d;10 a 14;CPF;sim;NR;;nao;sim;Baixado;sim;2026-06-30;1;PC-ENF-01
+76e539e6;2026-06-29;2026-06;Teste influenza A e B;INF2606B;7dc78d;5 a 9;CPF;sim;NR;;nao;sim;Baixado;sim;2026-07-01;2;PC-ENF-01
+ef5ac783;2026-06-30;2026-06;Teste COVID-19 (antígeno);COV2606A;38966e;15 a 19;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-01;1;PC-ENF-01
+a2803cdf;2026-06-30;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606A;3a37df;5 a 9;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-02;2;PC-ENF-03
+0280c16c;2026-06-30;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606C;b26034;50 a 59;CPF;sim;NR;;nao;nao;Baixado;sim;2026-07-01;1;PC-ENF-02
+7ab47f95;2026-06-30;2026-06;Teste dengue (NS1, IgG e IgM);DEN2606C;b26034;15 a 19;CPF;sim;NR;;nao;nao;Baixado;sim;2026-06-30;0;PC-ENF-02
+f1658757;2026-06-30;2026-06;Teste influenza A e B;INF2606A;4a4aca;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-06-30;0;PC-ENF-03
+845cdb9f;2026-06-30;2026-06;Teste influenza A e B;INF2606A;4a4aca;70 ou mais;CNS;sim;Inválido;;nao;nao;Baixado;sim;2026-07-06;6;PC-ENF-02
+b75b89e1;2026-06-30;2026-06;Teste influenza A e B;INF2606B;7dc78d;20 a 29;CPF;sim;NR;;nao;sim;Baixado;sim;2026-07-01;1;PC-ENF-03
+f5696dfa;2026-06-30;2026-06;Teste influenza A e B;INF2606B;7dc78d;50 a 59;CNS;sim;Reagente;;nao;nao;Baixado;sim;2026-06-30;0;PC-ENF-03
+7c46aa89;2026-07-01;2026-07;Teste COVID-19 (antígeno);COV2607A;117169;1 a 4;CPF;sim;NR;;nao;nao;Baixado;sim;2026-07-02;1;PC-ENF-01
+e8aface5;2026-07-01;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607A;54df09;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-04;3;PC-ENF-02
+9700c1f2;2026-07-01;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607A;54df09;40 a 49;CPF;sim;NR;;nao;nao;Baixado;sim;2026-07-04;3;PC-ENF-02
+e0729837;2026-07-01;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607B;37f5f3;50 a 59;CPF;sim;NR;;nao;nao;Baixado;sim;2026-07-04;3;PC-ENF-01
+1937c8a8;2026-07-01;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607C;c14e09;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-06;5;PC-ENF-01
+6bc357e9;2026-07-01;2026-07;Teste influenza A e B;INF2607A;8afbe9;40 a 49;CPF;sim;NR;;nao;nao;Baixado;sim;2026-07-01;0;PC-ENF-01
+2d8d588d;2026-07-01;2026-07;Teste influenza A e B;INF2607B;e95722;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-03;2;PC-ENF-02
+2dfb7f9f;2026-07-01;2026-07;Teste influenza A e B;INF2607B;e95722;10 a 14;CPF;sim;NR;;nao;nao;Baixado;sim;2026-07-01;0;PC-ENF-01
+ab3c3de4;2026-07-01;2026-07;Teste influenza A e B;INF2607B;e95722;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-05;4;PC-ENF-01
+66169ece;2026-07-01;2026-07;Teste influenza A e B;INF2607C;29508d;60 a 69;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-02;1;PC-ENF-01
+2fac6b0c;2026-07-01;2026-07;Teste influenza A e B;INF2607C;29508d;60 a 69;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-01;0;PC-ENF-01
+f027b911;2026-07-02;2026-07;Teste COVID-19 (antígeno);COV2607A;117169;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-03;1;PC-ENF-01
+e0632302;2026-07-02;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607A;54df09;10 a 14;CNS;sim;Reagente;;nao;nao;Baixado;sim;2026-07-04;2;PC-ENF-01
+147d14f6;2026-07-02;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607A;54df09;10 a 14;CPF;sim;NR;;nao;sim;Baixado;sim;2026-07-02;0;PC-ENF-03
+0a8b5637;2026-07-02;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607A;54df09;1 a 4;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-07;5;PC-ENF-01
+6b9b09c3;2026-07-02;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607B;37f5f3;50 a 59;CPF;sim;NR;;nao;sim;Baixado;sim;2026-07-08;6;PC-ENF-02
+f08a08e2;2026-07-02;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607C;c14e09;60 a 69;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-04;2;PC-ENF-01
+5c701482;2026-07-02;2026-07;Teste influenza A e B;INF2607A;8afbe9;20 a 29;CNS;sim;NR;;nao;sim;Baixado;sim;2026-07-02;0;PC-ENF-02
+4dd27a19;2026-07-02;2026-07;Teste influenza A e B;INF2607A;8afbe9;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-03;1;PC-ENF-01
+1dfd06f2;2026-07-02;2026-07;Teste influenza A e B;INF2607A;8afbe9;10 a 14;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-03;1;PC-ENF-03
+fdb7665b;2026-07-02;2026-07;Teste influenza A e B;INF2607B;e95722;40 a 49;CPF;sim;NR;;nao;nao;Baixado;sim;2026-07-03;1;PC-ENF-01
+38d4b6a7;2026-07-02;2026-07;Teste influenza A e B;INF2607B;e95722;20 a 29;CPF;sim;NR;;nao;nao;Baixado;sim;2026-07-02;0;PC-ENF-01
+651d6034;2026-07-02;2026-07;Teste influenza A e B;INF2607B;e95722;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-08;6;PC-ENF-01
+8086693d;2026-07-02;2026-07;Teste influenza A e B;INF2607C;29508d;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-02;0;PC-ENF-02
+5c3b00e9;2026-07-02;2026-07;Teste influenza A e B;INF2607C;29508d;20 a 29;CNS;sim;Inválido;;nao;sim;Baixado;sim;2026-07-02;0;PC-ENF-01
+adc6cf5a;2026-07-02;2026-07;Teste influenza A e B;INF2607C;29508d;60 a 69;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-04;2;PC-ENF-01
+d5caa7a4;2026-07-03;2026-07;Benzilpenicilina benzatina 1.200.000 UI;BEN2607A;24fbaf;20 a 29;CNS;sim;;;nao;nao;Baixado;sim;2026-07-04;1;PC-ENF-02
+69d5a05b;2026-07-03;2026-07;Teste COVID-19 (antígeno);COV2607A;117169;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-03;0;PC-ENF-02
+0c8969f0;2026-07-03;2026-07;Teste COVID-19 (antígeno);COV2607B;4a9925;20 a 29;CNS;sim;NR;;nao;nao;Cancelado;nao;;;PC-ENF-03
+39067880;2026-07-03;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607A;54df09;5 a 9;CPF;sim;NR;;nao;nao;Baixado;sim;2026-07-03;0;PC-ENF-02
+2e7b017d;2026-07-03;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607B;37f5f3;20 a 29;CNS;sim;Inválido;;nao;sim;Baixado;sim;2026-07-03;0;PC-ENF-02
+03bf0874;2026-07-03;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607B;37f5f3;20 a 29;CPF;sim;NR;;nao;nao;Baixado;sim;2026-07-06;3;PC-ENF-01
+a188a5de;2026-07-03;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607B;37f5f3;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-04;1;PC-ENF-02
+5938c310;2026-07-03;2026-07;Teste influenza A e B;INF2607C;29508d;20 a 29;CPF;sim;NR;;nao;nao;Baixado;sim;2026-07-03;0;PC-ENF-03
+c3d30b34;2026-07-03;2026-07;Teste influenza A e B;INF2607C;29508d;40 a 49;CNS;sim;NR;;nao;sim;Baixado;sim;2026-07-03;0;PC-ENF-02
+21c35762;2026-07-06;2026-07;Teste COVID-19 (antígeno);COV2607A;117169;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-09;3;PC-ENF-02
+b848a380;2026-07-06;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607C;c14e09;5 a 9;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-07;1;PC-ENF-02
+2618b43d;2026-07-06;2026-07;Teste influenza A e B;INF2607A;8afbe9;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-08;2;PC-ENF-01
+4d35997a;2026-07-06;2026-07;Teste influenza A e B;INF2607B;e95722;20 a 29;CNS;sim;NR;;nao;sim;Baixado;sim;2026-07-07;1;PC-ENF-02
+078ae9ee;2026-07-06;2026-07;Teste influenza A e B;INF2607C;29508d;40 a 49;CPF;sim;NR;;nao;sim;Baixado;sim;2026-07-09;3;PC-ENF-01
+b80d8f4c;2026-07-07;2026-07;Benzilpenicilina benzatina 1.200.000 UI;BEN2607A;24fbaf;60 a 69;CPF;sim;;;nao;nao;Baixado;sim;2026-07-10;3;PC-ENF-01
+7bc9c895;2026-07-07;2026-07;Benzilpenicilina benzatina 1.200.000 UI;BEN2607A;24fbaf;20 a 29;CNS;sim;;;nao;nao;Baixado;sim;2026-07-11;4;PC-ENF-01
+3f6094d2;2026-07-07;2026-07;Teste COVID-19 (antígeno);COV2607A;117169;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-07;0;PC-ENF-01
+49a6bd83;2026-07-07;2026-07;Teste COVID-19 (antígeno);COV2607A;117169;70 ou mais;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-11;4;PC-ENF-02
+44d713a7;2026-07-07;2026-07;Teste COVID-19 (antígeno);COV2607A;117169;5 a 9;CPF;sim;NR;;nao;nao;Baixado;sim;2026-07-09;2;PC-ENF-01
+131bf670;2026-07-07;2026-07;Teste COVID-19 (antígeno);COV2607A;117169;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-07;0;PC-ENF-02
+be899ee8;2026-07-07;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607A;54df09;1 a 4;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-07;0;PC-ENF-03
+86c2fd5d;2026-07-07;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607C;c14e09;30 a 39;CNS;sim;NR;;nao;sim;Baixado;sim;2026-07-07;0;PC-ENF-01
+f2a6cc6b;2026-07-07;2026-07;Teste influenza A e B;INF2607A;8afbe9;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-13;6;PC-ENF-02
+5cda0f6f;2026-07-07;2026-07;Teste influenza A e B;INF2607B;e95722;5 a 9;CPF;sim;NR;;nao;nao;Baixado;sim;2026-07-07;0;PC-ENF-03
+9d4155c7;2026-07-07;2026-07;Teste influenza A e B;INF2607C;29508d;15 a 19;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-07;0;PC-ENF-01
+9e74e466;2026-07-07;2026-07;Teste influenza A e B;INF2607C;29508d;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-09;2;PC-ENF-03
+e7a08f8c;2026-07-08;2026-07;Teste COVID-19 (antígeno);COV2607A;117169;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-09;1;PC-ENF-01
+1abddda9;2026-07-08;2026-07;Teste COVID-19 (antígeno);COV2607A;117169;40 a 49;CPF;sim;NR;;nao;nao;Baixado;sim;2026-07-10;2;PC-ENF-03
+2471387d;2026-07-08;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607B;37f5f3;10 a 14;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-08;0;PC-ENF-02
+6c87d047;2026-07-08;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607B;37f5f3;10 a 14;CPF;sim;Reagente;Reagente;sim;sim;Baixado;sim;2026-07-08;0;PC-ENF-03
+c1cc574b;2026-07-08;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607C;c14e09;20 a 29;CNS;sim;NR;;nao;sim;Baixado;sim;2026-07-09;1;PC-ENF-01
+d9404129;2026-07-08;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607C;c14e09;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-10;2;PC-ENF-01
+ab1d8b2e;2026-07-08;2026-07;Teste influenza A e B;INF2607B;e95722;60 a 69;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-08;0;PC-ENF-02
+4c15bd52;2026-07-08;2026-07;Teste influenza A e B;INF2607B;e95722;1 a 4;CPF;sim;NR;;nao;nao;Baixado;sim;2026-07-10;2;PC-ENF-03
+6540117b;2026-07-08;2026-07;Teste influenza A e B;INF2607C;29508d;5 a 9;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-08;0;PC-ENF-03
+052b2ed8;2026-07-09;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607A;54df09;10 a 14;CPF;sim;Reagente;Reagente;sim;nao;Baixado;sim;2026-07-11;2;PC-ENF-01
+ff412643;2026-07-09;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607A;54df09;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-12;3;PC-ENF-01
+4c3a49b9;2026-07-09;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607C;c14e09;15 a 19;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-10;1;PC-ENF-03
+2d2f76f0;2026-07-09;2026-07;Teste influenza A e B;INF2607A;8afbe9;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-10;1;PC-ENF-02
+9ca06a55;2026-07-09;2026-07;Teste influenza A e B;INF2607A;8afbe9;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-10;1;PC-ENF-03
+26ece537;2026-07-09;2026-07;Teste influenza A e B;INF2607B;e95722;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-09;0;PC-ENF-02
+36703f57;2026-07-10;2026-07;Benzilpenicilina benzatina 1.200.000 UI;BEN2607A;24fbaf;50 a 59;CPF;sim;;;nao;nao;Baixado;sim;2026-07-10;0;PC-ENF-01
+5c898f81;2026-07-10;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607A;54df09;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-11;1;PC-ENF-02
+f51fc734;2026-07-10;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607A;54df09;15 a 19;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-11;1;PC-ENF-01
+4fef22e2;2026-07-10;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607B;37f5f3;50 a 59;CNS;sim;NR;;nao;sim;Baixado;sim;2026-07-10;0;PC-ENF-03
+4ebfe43c;2026-07-10;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607B;37f5f3;15 a 19;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-10;0;PC-ENF-02
+fe773b5b;2026-07-10;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607C;c14e09;20 a 29;CPF;sim;NR;;nao;nao;Baixado;sim;2026-07-10;0;PC-ENF-02
+8fbe02ba;2026-07-10;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607C;c14e09;menor de 1;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-15;5;PC-ENF-02
+c0c72d44;2026-07-10;2026-07;Teste influenza A e B;INF2607B;e95722;60 a 69;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-10;0;PC-ENF-01
+4b570e6f;2026-07-10;2026-07;Teste influenza A e B;INF2607B;e95722;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-10;0;PC-ENF-03
+c9d394ec;2026-07-13;2026-07;Benzilpenicilina benzatina 1.200.000 UI;BEN2607A;24fbaf;60 a 69;CNS;sim;;;nao;nao;Baixado;sim;2026-07-13;0;PC-ENF-02
+5e549c61;2026-07-13;2026-07;Teste COVID-19 (antígeno);COV2607A;117169;40 a 49;CNS;nao;NR;;nao;nao;A revisar;nao;;;PC-ENF-01
+f97494b2;2026-07-13;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607A;54df09;5 a 9;CPF;sim;NR;;nao;nao;Baixado;sim;2026-07-14;1;PC-ENF-03
+2e28928f;2026-07-13;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607B;37f5f3;1 a 4;CNS;nao;NR;;nao;nao;A revisar;nao;;;PC-ENF-02
+a2f06437;2026-07-13;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607C;c14e09;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-17;4;PC-ENF-03
+131fe289;2026-07-13;2026-07;Teste influenza A e B;INF2607C;29508d;60 a 69;CNS;sim;NR;;nao;nao;Não encontrado no GSS;nao;;;PC-ENF-03
+b9387bca;2026-07-14;2026-07;Benzilpenicilina benzatina 1.200.000 UI;BEN2607A;24fbaf;50 a 59;CNS;sim;;;nao;nao;Baixado;sim;2026-07-17;3;PC-ENF-01
+7d0deeb4;2026-07-14;2026-07;Teste COVID-19 (antígeno);COV2607A;117169;5 a 9;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-19;5;PC-ENF-02
+15b299c2;2026-07-14;2026-07;Teste COVID-19 (antígeno);COV2607B;4a9925;1 a 4;CPF;sim;Inválido;;nao;sim;Baixado;sim;2026-07-15;1;PC-ENF-01
+4041b85b;2026-07-14;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607B;37f5f3;10 a 14;CNS;sim;NR;;nao;sim;Baixado;sim;2026-07-14;0;PC-ENF-01
+40322928;2026-07-14;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607C;c14e09;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-15;1;PC-ENF-02
+bcbdcd97;2026-07-14;2026-07;Teste influenza A e B;INF2607A;8afbe9;50 a 59;CNS;sim;Inválido;;nao;nao;Baixado;sim;2026-07-18;4;PC-ENF-01
+03cfa1c8;2026-07-14;2026-07;Teste influenza A e B;INF2607A;8afbe9;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-19;5;PC-ENF-03
+9e506531;2026-07-14;2026-07;Teste influenza A e B;INF2607A;8afbe9;10 a 14;CPF;sim;NR;;nao;nao;Baixado;sim;2026-07-14;0;PC-ENF-01
+701e1286;2026-07-15;2026-07;Benzilpenicilina benzatina 1.200.000 UI;BEN2607A;24fbaf;10 a 14;CNS;sim;;;nao;nao;Baixado;sim;2026-07-15;0;PC-ENF-01
+3035c98f;2026-07-15;2026-07;Teste COVID-19 (antígeno);COV2607A;117169;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-16;1;PC-ENF-01
+66798f02;2026-07-15;2026-07;Teste COVID-19 (antígeno);COV2607B;4a9925;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-18;3;PC-ENF-01
+8acc5a11;2026-07-15;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607A;54df09;15 a 19;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-17;2;PC-ENF-01
+dc43ccf6;2026-07-15;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607B;37f5f3;60 a 69;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-16;1;PC-ENF-03
+20baee75;2026-07-15;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607B;37f5f3;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-15;0;PC-ENF-02
+cab0ae1e;2026-07-15;2026-07;Teste influenza A e B;INF2607A;8afbe9;5 a 9;CNS;sim;Inválido;;nao;nao;Baixado;sim;2026-07-15;0;PC-ENF-02
+205cd791;2026-07-15;2026-07;Teste influenza A e B;INF2607B;e95722;20 a 29;CPF;sim;NR;;nao;sim;Baixado;sim;2026-07-17;2;PC-ENF-01
+a3033ccc;2026-07-16;2026-07;Teste COVID-19 (antígeno);COV2607A;117169;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-17;1;PC-ENF-03
+e4aa21d5;2026-07-16;2026-07;Teste COVID-19 (antígeno);COV2607A;117169;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-21;5;PC-ENF-01
+2f2b4be5;2026-07-16;2026-07;Teste COVID-19 (antígeno);COV2607B;4a9925;15 a 19;CNS;sim;NR;;nao;sim;Baixado;sim;2026-07-21;5;PC-ENF-02
+4a433793;2026-07-16;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607B;37f5f3;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-16;0;PC-ENF-02
+2e00e64f;2026-07-16;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607C;c14e09;70 ou mais;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-16;0;PC-ENF-01
+554a23ea;2026-07-16;2026-07;Teste influenza A e B;INF2607A;8afbe9;15 a 19;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-17;1;PC-ENF-03
+ac666c39;2026-07-16;2026-07;Teste influenza A e B;INF2607A;8afbe9;10 a 14;CPF;sim;Reagente;;nao;nao;Baixado;sim;2026-07-17;1;PC-ENF-02
+0d5fe638;2026-07-16;2026-07;Teste influenza A e B;INF2607B;e95722;1 a 4;CNS;sim;Reagente;;nao;nao;Baixado;sim;2026-07-17;1;PC-ENF-01
+457b7531;2026-07-17;2026-07;Benzilpenicilina benzatina 1.200.000 UI;BEN2607A;24fbaf;30 a 39;CNS;sim;;;nao;nao;Baixado;sim;2026-07-18;1;PC-ENF-02
+9c9a44f7;2026-07-17;2026-07;Benzilpenicilina benzatina 1.200.000 UI;BEN2607A;24fbaf;30 a 39;CNS;sim;;;nao;nao;Baixado;sim;2026-07-22;5;PC-ENF-03
+65b1912f;2026-07-17;2026-07;Teste COVID-19 (antígeno);COV2607A;117169;30 a 39;CPF;sim;NR;;nao;nao;Baixado;sim;2026-07-17;0;PC-ENF-01
+21f2cf63;2026-07-17;2026-07;Teste COVID-19 (antígeno);COV2607B;4a9925;70 ou mais;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-18;1;PC-ENF-03
+4b5e39a4;2026-07-17;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607B;37f5f3;20 a 29;CPF;nao;NR;;nao;nao;A revisar;nao;;;PC-ENF-03
+54b4db14;2026-07-17;2026-07;Teste influenza A e B;INF2607A;8afbe9;50 a 59;CPF;sim;NR;;nao;nao;Baixado;sim;2026-07-20;3;PC-ENF-02
+8f233b9a;2026-07-17;2026-07;Teste influenza A e B;INF2607A;8afbe9;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-20;3;PC-ENF-01
+f561e39d;2026-07-17;2026-07;Teste influenza A e B;INF2607C;29508d;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-18;1;PC-ENF-01
+6b132ff8;2026-07-20;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607A;54df09;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-21;1;PC-ENF-02
+18e4f8a8;2026-07-20;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607B;37f5f3;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-21;1;PC-ENF-02
+2576f955;2026-07-20;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607C;c14e09;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-24;4;PC-ENF-03
+1eea8b1b;2026-07-20;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607C;c14e09;30 a 39;CPF;sim;NR;;nao;nao;Baixado;sim;2026-07-23;3;PC-ENF-02
+d0755669;2026-07-20;2026-07;Teste influenza A e B;INF2607A;8afbe9;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-24;4;PC-ENF-01
+4822fff4;2026-07-20;2026-07;Teste influenza A e B;INF2607B;e95722;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-22;2;PC-ENF-01
+39d3fe20;2026-07-20;2026-07;Teste influenza A e B;INF2607B;e95722;30 a 39;CNS;sim;Inválido;;nao;nao;Baixado;sim;2026-07-21;1;PC-ENF-02
+4125ca0f;2026-07-20;2026-07;Teste influenza A e B;INF2607C;29508d;40 a 49;CPF;sim;NR;;nao;nao;Baixado;sim;2026-07-24;4;PC-ENF-03
+addc49ef;2026-07-21;2026-07;Benzilpenicilina benzatina 1.200.000 UI;BEN2607A;24fbaf;50 a 59;CNS;sim;;;nao;nao;Baixado;sim;2026-07-23;2;PC-ENF-01
+8e85fa3d;2026-07-21;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607A;54df09;60 a 69;CNS;sim;NR;;nao;sim;Baixado;sim;2026-07-22;1;PC-ENF-03
+2b979b76;2026-07-21;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607A;54df09;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-22;1;PC-ENF-02
+2b406c2c;2026-07-21;2026-07;Teste influenza A e B;INF2607A;8afbe9;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-22;1;PC-ENF-03
+0f2c0e30;2026-07-21;2026-07;Teste influenza A e B;INF2607B;e95722;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-21;0;PC-ENF-03
+ea83fddb;2026-07-21;2026-07;Teste influenza A e B;INF2607B;e95722;20 a 29;CNS;sim;NR;;nao;sim;Baixado;sim;2026-07-24;3;PC-ENF-03
+08f97d22;2026-07-21;2026-07;Teste influenza A e B;INF2607B;e95722;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-23;2;PC-ENF-01
+8ff2a475;2026-07-22;2026-07;Teste COVID-19 (antígeno);COV2607A;117169;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-22;0;PC-ENF-02
+89fa8069;2026-07-22;2026-07;Teste COVID-19 (antígeno);COV2607A;117169;20 a 29;CNS;sim;Reagente;NR;sim;nao;Baixado;sim;2026-07-23;1;PC-ENF-03
+aa21cb7b;2026-07-22;2026-07;Teste COVID-19 (antígeno);COV2607A;117169;30 a 39;CNS;sim;Reagente;;nao;nao;Baixado;sim;2026-07-25;3;PC-ENF-01
+29b18f93;2026-07-22;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607A;54df09;20 a 29;CNS;sim;NR;;nao;sim;Baixado;sim;2026-07-22;0;PC-ENF-02
+28929f4a;2026-07-22;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607B;37f5f3;15 a 19;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-24;2;PC-ENF-01
+508bc7c2;2026-07-22;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607C;c14e09;50 a 59;CNS;sim;NR;;nao;sim;Baixado;sim;2026-07-25;3;PC-ENF-01
+a282c092;2026-07-22;2026-07;Teste influenza A e B;INF2607A;8afbe9;20 a 29;CPF;sim;NR;;nao;sim;Baixado;sim;2026-07-23;1;PC-ENF-03
+2860d5de;2026-07-23;2026-07;Teste COVID-19 (antígeno);COV2607A;117169;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-25;2;PC-ENF-03
+6b076c77;2026-07-23;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607A;54df09;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-23;0;PC-ENF-02
+ccc5d386;2026-07-23;2026-07;Teste influenza A e B;INF2607A;8afbe9;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-23;0;PC-ENF-03
+a2cb9339;2026-07-23;2026-07;Teste influenza A e B;INF2607C;29508d;5 a 9;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-26;3;PC-ENF-01
+d9814f7f;2026-07-24;2026-07;Benzilpenicilina benzatina 1.200.000 UI;BEN2607A;24fbaf;40 a 49;CNS;sim;;;nao;nao;Baixado;sim;2026-07-24;0;PC-ENF-02
+18304ec9;2026-07-24;2026-07;Teste COVID-19 (antígeno);COV2607A;117169;10 a 14;CPF;sim;NR;;nao;nao;Baixado;sim;2026-07-24;0;PC-ENF-01
+cf192ab5;2026-07-24;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607A;54df09;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-24;0;PC-ENF-01
+08c7f9c5;2026-07-24;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607B;37f5f3;20 a 29;CPF;sim;NR;;nao;nao;Baixado;sim;2026-07-24;0;PC-ENF-03
+d01e63f8;2026-07-24;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607B;37f5f3;20 a 29;CPF;sim;NR;;nao;nao;Baixado;sim;2026-07-26;2;PC-ENF-01
+b1366ca1;2026-07-24;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607B;37f5f3;50 a 59;CNS;sim;NR;;nao;sim;Baixado;sim;2026-07-24;0;PC-ENF-01
+acea3b7b;2026-07-24;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607C;c14e09;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-24;0;PC-ENF-01
+19284f11;2026-07-24;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607C;c14e09;30 a 39;CPF;sim;NR;;nao;sim;Baixado;sim;2026-07-24;0;PC-ENF-02
+f4af9ed9;2026-07-24;2026-07;Teste influenza A e B;INF2607C;29508d;60 a 69;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-25;1;PC-ENF-01
+2fafdd4f;2026-07-27;2026-07;Benzilpenicilina benzatina 1.200.000 UI;BEN2607A;24fbaf;40 a 49;CNS;sim;;;nao;nao;Baixado;sim;2026-07-28;1;PC-ENF-03
+3ac09e2c;2026-07-27;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607A;54df09;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-27;0;PC-ENF-01
+5954fe7c;2026-07-27;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607B;37f5f3;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-27;0;PC-ENF-02
+43ae5c2c;2026-07-27;2026-07;Teste influenza A e B;INF2607A;8afbe9;20 a 29;CNS;sim;NR;;nao;sim;Baixado;sim;2026-07-29;2;PC-ENF-03
+f27360ef;2026-07-27;2026-07;Teste influenza A e B;INF2607B;e95722;20 a 29;CPF;sim;NR;;nao;nao;Baixado;sim;2026-07-27;0;PC-ENF-01
+ac4545ae;2026-07-28;2026-07;Benzilpenicilina benzatina 1.200.000 UI;BEN2607A;24fbaf;70 ou mais;CNS;sim;;;nao;nao;Baixado;sim;2026-08-01;4;PC-ENF-02
+08bd8b88;2026-07-28;2026-07;Benzilpenicilina benzatina 1.200.000 UI;BEN2607A;24fbaf;70 ou mais;CNS;sim;;;nao;nao;Baixado;sim;2026-07-28;0;PC-ENF-02
+447aef4c;2026-07-28;2026-07;Benzilpenicilina benzatina 1.200.000 UI;BEN2607A;24fbaf;20 a 29;CNS;sim;;;nao;nao;Baixado;sim;2026-07-28;0;PC-ENF-01
+09ccfa63;2026-07-28;2026-07;Benzilpenicilina benzatina 1.200.000 UI;BEN2607A;24fbaf;15 a 19;CNS;sim;;;nao;nao;Baixado;sim;2026-07-28;0;PC-ENF-01
+df1e6def;2026-07-28;2026-07;Teste COVID-19 (antígeno);COV2607A;117169;5 a 9;CPF;sim;NR;;nao;nao;Baixado;sim;2026-07-30;2;PC-ENF-03
+ca3e079c;2026-07-28;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607A;54df09;30 a 39;CNS;nao;NR;;nao;nao;Baixado;sim;2026-07-28;0;PC-ENF-02
+55c1c387;2026-07-28;2026-07;Teste influenza A e B;INF2607A;8afbe9;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-31;3;PC-ENF-01
+5334f6b5;2026-07-28;2026-07;Teste influenza A e B;INF2607A;8afbe9;30 a 39;CNS;sim;Reagente;NR;sim;nao;Baixado;sim;2026-08-02;5;PC-ENF-02
+09388c4f;2026-07-28;2026-07;Teste influenza A e B;INF2607B;e95722;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-30;2;PC-ENF-01
+d7b0d37b;2026-07-29;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607B;37f5f3;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-30;1;PC-ENF-03
+3dcb9d86;2026-07-29;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607B;37f5f3;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-01;3;PC-ENF-03
+e27b5a9b;2026-07-29;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607B;37f5f3;20 a 29;CNS;nao;Reagente;NR;sim;nao;Baixado;sim;2026-07-30;1;PC-ENF-01
+2cd7acaa;2026-07-29;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607C;c14e09;20 a 29;CPF;sim;NR;;nao;sim;Baixado;sim;2026-07-30;1;PC-ENF-01
+41bc39d1;2026-07-29;2026-07;Teste influenza A e B;INF2607B;e95722;5 a 9;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-29;0;PC-ENF-01
+c8390b2c;2026-07-29;2026-07;Teste influenza A e B;INF2607B;e95722;5 a 9;CNS;sim;NR;;nao;sim;Baixado;sim;2026-07-30;1;PC-ENF-02
+cee92b30;2026-07-29;2026-07;Teste influenza A e B;INF2607C;29508d;20 a 29;CNS;sim;Inválido;;nao;nao;Baixado;sim;2026-07-29;0;PC-ENF-02
+efd43593;2026-07-29;2026-07;Teste influenza A e B;INF2607C;29508d;10 a 14;CNS;sim;Inválido;;nao;nao;Baixado;sim;2026-07-30;1;PC-ENF-02
+2606fa44;2026-07-29;2026-07;Teste influenza A e B;INF2607C;29508d;30 a 39;CPF;sim;NR;;nao;nao;Baixado;sim;2026-07-29;0;PC-ENF-03
+9a16d3f8;2026-07-30;2026-07;Benzilpenicilina benzatina 1.200.000 UI;BEN2607A;24fbaf;70 ou mais;CNS;sim;;;nao;nao;Baixado;sim;2026-07-30;0;PC-ENF-01
+089a44e9;2026-07-30;2026-07;Benzilpenicilina benzatina 1.200.000 UI;BEN2607A;24fbaf;60 a 69;CNS;sim;;;nao;nao;Baixado;sim;2026-07-31;1;PC-ENF-03
+2ae85a48;2026-07-30;2026-07;Teste COVID-19 (antígeno);COV2607A;117169;70 ou mais;CPF;sim;NR;;nao;sim;Baixado;sim;2026-07-30;0;PC-ENF-02
+5bb98c3c;2026-07-30;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607A;54df09;20 a 29;CPF;sim;NR;;nao;nao;Baixado;sim;2026-08-01;2;PC-ENF-02
+ad81506f;2026-07-30;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607A;54df09;5 a 9;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-02;3;PC-ENF-02
+ca9aa4da;2026-07-30;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607A;54df09;1 a 4;CPF;sim;NR;;nao;sim;Baixado;sim;2026-07-30;0;PC-ENF-02
+70721991;2026-07-30;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607C;c14e09;30 a 39;CPF;sim;NR;;nao;sim;Baixado;sim;2026-07-30;0;PC-ENF-03
+345af430;2026-07-30;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607C;c14e09;50 a 59;CPF;sim;Reagente;;nao;nao;Baixado;sim;2026-07-30;0;PC-ENF-01
+23ce50df;2026-07-30;2026-07;Teste influenza A e B;INF2607A;8afbe9;10 a 14;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-30;0;PC-ENF-01
+d300ae40;2026-07-30;2026-07;Teste influenza A e B;INF2607B;e95722;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-31;1;PC-ENF-02
+b1076631;2026-07-30;2026-07;Teste influenza A e B;INF2607C;29508d;menor de 1;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-30;0;PC-ENF-02
+58e27361;2026-07-31;2026-07;Benzilpenicilina benzatina 1.200.000 UI;BEN2607A;24fbaf;20 a 29;CNS;sim;;;nao;nao;Baixado;sim;2026-07-31;0;PC-ENF-01
+5ed6106e;2026-07-31;2026-07;Benzilpenicilina benzatina 1.200.000 UI;BEN2607A;24fbaf;40 a 49;CPF;sim;;;nao;nao;Baixado;sim;2026-08-01;1;PC-ENF-03
+88652141;2026-07-31;2026-07;Teste COVID-19 (antígeno);COV2607A;117169;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-07-31;0;PC-ENF-02
+da4030fe;2026-07-31;2026-07;Teste COVID-19 (antígeno);COV2607A;117169;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-01;1;PC-ENF-02
+3121feff;2026-07-31;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607A;54df09;70 ou mais;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-05;5;PC-ENF-02
+65d54499;2026-07-31;2026-07;Teste dengue (NS1, IgG e IgM);DEN2607B;37f5f3;20 a 29;CPF;sim;NR;;nao;nao;Baixado;sim;2026-08-02;2;PC-ENF-01
+75071ccc;2026-07-31;2026-07;Teste influenza A e B;INF2607A;8afbe9;20 a 29;CNS;sim;Reagente;NR;sim;nao;Baixado;sim;2026-08-01;1;PC-ENF-02
+0b637119;2026-08-03;2026-08;Teste COVID-19 (antígeno);COV2608A;a210b8;20 a 29;CNS;sim;NR;;nao;sim;Baixado;sim;2026-08-07;4;PC-ENF-03
+22df0c19;2026-08-03;2026-08;Teste COVID-19 (antígeno);COV2608A;a210b8;15 a 19;CPF;sim;NR;;nao;nao;Baixado;sim;2026-08-03;0;PC-ENF-02
+d42c8cd8;2026-08-03;2026-08;Teste COVID-19 (antígeno);COV2608B;2f8182;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-03;0;PC-ENF-01
+8d73de20;2026-08-03;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608A;dad238;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-04;1;PC-ENF-02
+a1d66539;2026-08-03;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608A;dad238;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-06;3;PC-ENF-03
+f4f24fe6;2026-08-03;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608B;a863c2;30 a 39;CPF;sim;NR;;nao;sim;Baixado;sim;2026-08-04;1;PC-ENF-01
+35ade74f;2026-08-03;2026-08;Teste influenza A e B;INF2608A;03dc03;40 a 49;CPF;sim;NR;;nao;nao;Baixado;sim;2026-08-04;1;PC-ENF-01
+7098dcc2;2026-08-04;2026-08;Benzilpenicilina benzatina 1.200.000 UI;BEN2608A;e863db;70 ou mais;CNS;sim;;;nao;nao;Baixado;sim;2026-08-07;3;PC-ENF-01
+0d0d0f4d;2026-08-04;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608A;dad238;20 a 29;CNS;sim;NR;;nao;sim;Baixado;sim;2026-08-04;0;PC-ENF-02
+ded7676f;2026-08-04;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608A;dad238;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-05;1;PC-ENF-01
+6792c506;2026-08-04;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608B;a863c2;5 a 9;CPF;sim;NR;;nao;sim;Baixado;sim;2026-08-04;0;PC-ENF-03
+11002364;2026-08-04;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608B;a863c2;50 a 59;CNS;sim;NR;;nao;nao;Cancelado;nao;;;PC-ENF-03
+288669d2;2026-08-04;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608C;bd1806;15 a 19;CNS;sim;Reagente;;nao;nao;Baixado;sim;2026-08-04;0;PC-ENF-03
+85804b8a;2026-08-04;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608C;bd1806;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-07;3;PC-ENF-02
+ce4dd6fd;2026-08-04;2026-08;Teste influenza A e B;INF2608B;cfe42d;60 a 69;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-04;0;PC-ENF-03
+8f7d7ea0;2026-08-05;2026-08;Benzilpenicilina benzatina 1.200.000 UI;BEN2608A;e863db;30 a 39;CNS;sim;;;nao;nao;Baixado;sim;2026-08-07;2;PC-ENF-01
+161126d2;2026-08-05;2026-08;Teste COVID-19 (antígeno);COV2608B;2f8182;70 ou mais;CPF;sim;NR;;nao;nao;Baixado;sim;2026-08-09;4;PC-ENF-02
+b9f8ed7a;2026-08-05;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608B;a863c2;40 a 49;CPF;sim;Reagente;NR;sim;sim;Baixado;sim;2026-08-05;0;PC-ENF-01
+612c5751;2026-08-05;2026-08;Teste influenza A e B;INF2608A;03dc03;10 a 14;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-10;5;PC-ENF-01
+d86aa8bb;2026-08-06;2026-08;Teste COVID-19 (antígeno);COV2608B;2f8182;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-06;0;PC-ENF-01
+63661e89;2026-08-06;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608A;dad238;50 a 59;CPF;sim;NR;;nao;nao;Baixado;sim;2026-08-09;3;PC-ENF-02
+fbb04f5f;2026-08-06;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608B;a863c2;70 ou mais;CNS;sim;Reagente;;nao;nao;Baixado;sim;2026-08-09;3;PC-ENF-03
+1731aaf6;2026-08-06;2026-08;Teste influenza A e B;INF2608B;cfe42d;20 a 29;CNS;sim;NR;;nao;sim;Baixado;sim;2026-08-08;2;PC-ENF-02
+0c4e9a22;2026-08-07;2026-08;Benzilpenicilina benzatina 1.200.000 UI;BEN2608A;e863db;70 ou mais;CPF;sim;;;nao;nao;Baixado;sim;2026-08-07;0;PC-ENF-01
+ce90515a;2026-08-07;2026-08;Teste COVID-19 (antígeno);COV2608A;a210b8;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-10;3;PC-ENF-01
+52749011;2026-08-07;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608A;dad238;20 a 29;CNS;sim;Reagente;;nao;sim;Baixado;sim;2026-08-08;1;PC-ENF-01
+78bec3d7;2026-08-07;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608B;a863c2;20 a 29;CNS;sim;NR;;nao;sim;Baixado;sim;2026-08-10;3;PC-ENF-02
+fa28f32d;2026-08-07;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608B;a863c2;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-07;0;PC-ENF-02
+0b17b89b;2026-08-07;2026-08;Teste influenza A e B;INF2608A;03dc03;60 a 69;CPF;sim;NR;;nao;nao;Baixado;sim;2026-08-08;1;PC-ENF-01
+e6d08db4;2026-08-07;2026-08;Teste influenza A e B;INF2608B;cfe42d;5 a 9;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-09;2;PC-ENF-02
+0ede89c9;2026-08-10;2026-08;Teste COVID-19 (antígeno);COV2608A;a210b8;10 a 14;CNS;sim;Reagente;;nao;nao;Baixado;sim;2026-08-11;1;PC-ENF-01
+ca26574a;2026-08-10;2026-08;Teste COVID-19 (antígeno);COV2608B;2f8182;40 a 49;CPF;sim;Reagente;NR;sim;nao;Baixado;sim;2026-08-13;3;PC-ENF-02
+75bdc38c;2026-08-10;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608A;dad238;5 a 9;CPF;sim;NR;;nao;nao;Baixado;sim;2026-08-11;1;PC-ENF-03
+34cd8dae;2026-08-10;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608B;a863c2;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-12;2;PC-ENF-02
+07aa1535;2026-08-10;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608B;a863c2;60 a 69;CNS;sim;Reagente;NR;sim;nao;Baixado;sim;2026-08-16;6;PC-ENF-02
+6a0ed699;2026-08-10;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608B;a863c2;20 a 29;CPF;sim;NR;;nao;nao;Baixado;sim;2026-08-11;1;PC-ENF-02
+179d3ed3;2026-08-10;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608B;a863c2;40 a 49;CNS;sim;Reagente;;nao;nao;Baixado;sim;2026-08-10;0;PC-ENF-03
+5128003c;2026-08-10;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608B;a863c2;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-10;0;PC-ENF-02
+a5f80ca9;2026-08-10;2026-08;Teste influenza A e B;INF2608A;03dc03;15 a 19;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-10;0;PC-ENF-02
+e0cfd6b4;2026-08-10;2026-08;Teste influenza A e B;INF2608B;cfe42d;15 a 19;CNS;sim;Inválido;;nao;nao;Não encontrado no GSS;nao;;;PC-ENF-01
+a189891d;2026-08-11;2026-08;Benzilpenicilina benzatina 1.200.000 UI;BEN2608A;e863db;50 a 59;CPF;sim;;;nao;nao;Baixado;sim;2026-08-13;2;PC-ENF-01
+7233a2ac;2026-08-11;2026-08;Benzilpenicilina benzatina 1.200.000 UI;BEN2608A;e863db;50 a 59;CPF;sim;;;nao;nao;Baixado;sim;2026-08-15;4;PC-ENF-02
+677c0497;2026-08-11;2026-08;Benzilpenicilina benzatina 1.200.000 UI;BEN2608A;e863db;40 a 49;CNS;sim;;;nao;nao;Baixado;sim;2026-08-13;2;PC-ENF-01
+73ff0efb;2026-08-11;2026-08;Teste COVID-19 (antígeno);COV2608A;a210b8;20 a 29;CNS;nao;NR;;nao;nao;A revisar;nao;;;PC-ENF-02
+ade35378;2026-08-11;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608A;dad238;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-14;3;PC-ENF-01
+9a7df411;2026-08-11;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608A;dad238;10 a 14;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-15;4;PC-ENF-02
+852b15d3;2026-08-11;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608B;a863c2;70 ou mais;CNS;sim;NR;;nao;sim;Baixado;sim;2026-08-13;2;PC-ENF-01
+ec065982;2026-08-11;2026-08;Teste influenza A e B;INF2608A;03dc03;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-11;0;PC-ENF-02
+e3582c83;2026-08-11;2026-08;Teste influenza A e B;INF2608B;cfe42d;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-14;3;PC-ENF-01
+e2a5c1eb;2026-08-12;2026-08;Benzilpenicilina benzatina 1.200.000 UI;BEN2608A;e863db;20 a 29;CNS;sim;;;nao;nao;Baixado;sim;2026-08-12;0;PC-ENF-03
+8084590b;2026-08-12;2026-08;Benzilpenicilina benzatina 1.200.000 UI;BEN2608A;e863db;30 a 39;CNS;sim;;;nao;nao;Baixado;sim;2026-08-14;2;PC-ENF-03
+834135cc;2026-08-12;2026-08;Benzilpenicilina benzatina 1.200.000 UI;BEN2608A;e863db;30 a 39;CNS;sim;;;nao;nao;Baixado;sim;2026-08-12;0;PC-ENF-02
+2ce23471;2026-08-12;2026-08;Teste COVID-19 (antígeno);COV2608A;a210b8;40 a 49;CPF;sim;NR;;nao;sim;Baixado;sim;2026-08-12;0;PC-ENF-03
+82535a32;2026-08-12;2026-08;Teste COVID-19 (antígeno);COV2608A;a210b8;10 a 14;CPF;sim;NR;;nao;nao;Baixado;sim;2026-08-12;0;PC-ENF-02
+96d2b9a2;2026-08-12;2026-08;Teste COVID-19 (antígeno);COV2608A;a210b8;10 a 14;CNS;sim;NR;;nao;sim;Baixado;sim;2026-08-15;3;PC-ENF-03
+1f959f90;2026-08-12;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608A;dad238;1 a 4;CPF;sim;NR;;nao;sim;Baixado;sim;2026-08-12;0;PC-ENF-01
+5f1eb7a2;2026-08-12;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608A;dad238;40 a 49;CPF;sim;NR;;nao;nao;Baixado;sim;2026-08-12;0;PC-ENF-03
+5493b213;2026-08-12;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608A;dad238;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-13;1;PC-ENF-02
+a3d2d499;2026-08-12;2026-08;Teste influenza A e B;INF2608A;03dc03;70 ou mais;CNS;sim;NR;;nao;sim;Baixado;sim;2026-08-14;2;PC-ENF-01
+04a64ad0;2026-08-12;2026-08;Teste influenza A e B;INF2608A;03dc03;20 a 29;CPF;sim;NR;;nao;nao;Baixado;sim;2026-08-12;0;PC-ENF-01
+ec37cd27;2026-08-12;2026-08;Teste influenza A e B;INF2608A;03dc03;1 a 4;CPF;sim;NR;;nao;sim;Baixado;sim;2026-08-12;0;PC-ENF-01
+f68976a3;2026-08-12;2026-08;Teste influenza A e B;INF2608A;03dc03;15 a 19;CNS;sim;NR;;nao;sim;Baixado;sim;2026-08-13;1;PC-ENF-01
+4f3acace;2026-08-12;2026-08;Teste influenza A e B;INF2608B;cfe42d;1 a 4;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-12;0;PC-ENF-02
+0acf602e;2026-08-13;2026-08;Benzilpenicilina benzatina 1.200.000 UI;BEN2608A;e863db;20 a 29;CNS;sim;;;nao;nao;Baixado;sim;2026-08-14;1;PC-ENF-01
+5ce6dec0;2026-08-13;2026-08;Teste COVID-19 (antígeno);COV2608A;a210b8;15 a 19;CPF;sim;NR;;nao;sim;Baixado;sim;2026-08-15;2;PC-ENF-02
+a09e2831;2026-08-13;2026-08;Teste COVID-19 (antígeno);COV2608A;a210b8;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-14;1;PC-ENF-02
+ba8cec29;2026-08-13;2026-08;Teste COVID-19 (antígeno);COV2608A;a210b8;10 a 14;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-14;1;PC-ENF-02
+e9c7ccf3;2026-08-13;2026-08;Teste COVID-19 (antígeno);COV2608A;a210b8;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-16;3;PC-ENF-01
+05c8147e;2026-08-13;2026-08;Teste COVID-19 (antígeno);COV2608A;a210b8;15 a 19;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-13;0;PC-ENF-02
+7bfcdb9f;2026-08-13;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608B;a863c2;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-16;3;PC-ENF-02
+570b4fe9;2026-08-13;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608B;a863c2;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-17;4;PC-ENF-02
+b6e09faf;2026-08-14;2026-08;Teste COVID-19 (antígeno);COV2608A;a210b8;20 a 29;CNS;sim;NR;;nao;sim;Baixado;sim;2026-08-14;0;PC-ENF-02
+692600db;2026-08-14;2026-08;Teste COVID-19 (antígeno);COV2608A;a210b8;1 a 4;CPF;sim;NR;;nao;sim;Baixado;sim;2026-08-15;1;PC-ENF-01
+0898981b;2026-08-14;2026-08;Teste COVID-19 (antígeno);COV2608A;a210b8;1 a 4;CNS;sim;Reagente;NR;sim;nao;Baixado;sim;2026-08-14;0;PC-ENF-01
+902d9e55;2026-08-14;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608A;dad238;40 a 49;CNS;sim;Inválido;;nao;nao;Baixado;sim;2026-08-19;5;PC-ENF-02
+ecc3efe4;2026-08-14;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608B;a863c2;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-17;3;PC-ENF-01
+22b04427;2026-08-14;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608C;bd1806;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-14;0;PC-ENF-02
+1e365ac5;2026-08-14;2026-08;Teste influenza A e B;INF2608A;03dc03;20 a 29;CNS;sim;Inválido;;nao;sim;Baixado;sim;2026-08-16;2;PC-ENF-02
+02dce3c6;2026-08-17;2026-08;Benzilpenicilina benzatina 1.200.000 UI;BEN2608A;e863db;30 a 39;CNS;sim;;;nao;nao;Baixado;sim;2026-08-18;1;PC-ENF-01
+a929855a;2026-08-17;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608A;dad238;20 a 29;CPF;sim;NR;;nao;nao;Baixado;sim;2026-08-17;0;PC-ENF-02
+5592a6d2;2026-08-17;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608A;dad238;1 a 4;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-17;0;PC-ENF-01
+e838aa91;2026-08-17;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608B;a863c2;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-17;0;PC-ENF-01
+4bb5ffb7;2026-08-17;2026-08;Teste influenza A e B;INF2608A;03dc03;15 a 19;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-17;0;PC-ENF-01
+735e066e;2026-08-17;2026-08;Teste influenza A e B;INF2608A;03dc03;30 a 39;CNS;sim;NR;;nao;sim;Baixado;sim;2026-08-18;1;PC-ENF-01
+7a85db6d;2026-08-18;2026-08;Benzilpenicilina benzatina 1.200.000 UI;BEN2608A;e863db;20 a 29;CPF;sim;;;nao;nao;Baixado;sim;2026-08-18;0;PC-ENF-03
+452a4a7f;2026-08-18;2026-08;Benzilpenicilina benzatina 1.200.000 UI;BEN2608A;e863db;20 a 29;CNS;sim;;;nao;nao;Baixado;sim;2026-08-22;4;PC-ENF-01
+946604bf;2026-08-18;2026-08;Teste COVID-19 (antígeno);COV2608A;a210b8;5 a 9;CNS;sim;Reagente;;nao;nao;Baixado;sim;2026-08-18;0;PC-ENF-01
+9008529c;2026-08-18;2026-08;Teste COVID-19 (antígeno);COV2608B;2f8182;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-19;1;PC-ENF-02
+6703bd98;2026-08-18;2026-08;Teste influenza A e B;INF2608A;03dc03;10 a 14;CPF;sim;Inválido;;nao;nao;Baixado;sim;2026-08-19;1;PC-ENF-01
+4dda5894;2026-08-18;2026-08;Teste influenza A e B;INF2608A;03dc03;20 a 29;CNS;sim;NR;;nao;nao;Não encontrado no GSS;nao;;;PC-ENF-01
+0a0cc1d1;2026-08-18;2026-08;Teste influenza A e B;INF2608A;03dc03;menor de 1;CNS;sim;Inválido;;nao;sim;Baixado;sim;2026-08-19;1;PC-ENF-02
+494aa53e;2026-08-19;2026-08;Benzilpenicilina benzatina 1.200.000 UI;BEN2608A;e863db;20 a 29;CPF;sim;;;nao;nao;Baixado;sim;2026-08-19;0;PC-ENF-01
+15290839;2026-08-19;2026-08;Teste COVID-19 (antígeno);COV2608A;a210b8;10 a 14;CPF;sim;NR;;nao;sim;Baixado;sim;2026-08-23;4;PC-ENF-03
+a3d70629;2026-08-19;2026-08;Teste COVID-19 (antígeno);COV2608B;2f8182;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-19;0;PC-ENF-01
+3233976c;2026-08-19;2026-08;Teste COVID-19 (antígeno);COV2608B;2f8182;40 a 49;CPF;sim;NR;;nao;nao;Baixado;sim;2026-08-22;3;PC-ENF-01
+1295c259;2026-08-19;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608B;a863c2;60 a 69;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-20;1;PC-ENF-01
+c7567745;2026-08-19;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608B;a863c2;10 a 14;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-20;1;PC-ENF-02
+e4564086;2026-08-19;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608B;a863c2;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-19;0;PC-ENF-03
+66acc25f;2026-08-19;2026-08;Teste influenza A e B;INF2608A;03dc03;20 a 29;CPF;sim;NR;;nao;nao;Baixado;sim;2026-08-22;3;PC-ENF-02
+b9f1ad13;2026-08-20;2026-08;Teste COVID-19 (antígeno);COV2608A;a210b8;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-26;6;PC-ENF-02
+45675f0d;2026-08-20;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608A;dad238;5 a 9;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-23;3;PC-ENF-02
+8081726d;2026-08-20;2026-08;Teste influenza A e B;INF2608B;cfe42d;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-21;1;PC-ENF-02
+2d8ae904;2026-08-20;2026-08;Teste influenza A e B;INF2608B;cfe42d;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-20;0;PC-ENF-02
+7dcf4872;2026-08-21;2026-08;Benzilpenicilina benzatina 1.200.000 UI;BEN2608A;e863db;60 a 69;CNS;sim;;;nao;nao;Baixado;sim;2026-08-22;1;PC-ENF-01
+773ff21a;2026-08-21;2026-08;Benzilpenicilina benzatina 1.200.000 UI;BEN2608A;e863db;40 a 49;CNS;sim;;;nao;nao;Baixado;sim;2026-08-21;0;PC-ENF-01
+97cfb2e6;2026-08-21;2026-08;Benzilpenicilina benzatina 1.200.000 UI;BEN2608A;e863db;30 a 39;CPF;sim;;;nao;nao;Baixado;sim;2026-08-22;1;PC-ENF-01
+6468ef1a;2026-08-21;2026-08;Benzilpenicilina benzatina 1.200.000 UI;BEN2608A;e863db;30 a 39;CNS;sim;;;nao;nao;Baixado;sim;2026-08-26;5;PC-ENF-02
+c67bc038;2026-08-21;2026-08;Teste COVID-19 (antígeno);COV2608A;a210b8;10 a 14;CPF;sim;NR;;nao;nao;Baixado;sim;2026-08-22;1;PC-ENF-01
+3c17d866;2026-08-21;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608A;dad238;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-21;0;PC-ENF-02
+e2823ae5;2026-08-21;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608A;dad238;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-22;1;PC-ENF-03
+0f5a08e5;2026-08-21;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608B;a863c2;15 a 19;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-25;4;PC-ENF-01
+7acbcbdc;2026-08-21;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608B;a863c2;60 a 69;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-22;1;PC-ENF-01
+419e11eb;2026-08-21;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608C;bd1806;60 a 69;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-23;2;PC-ENF-01
+e6e9d527;2026-08-21;2026-08;Teste influenza A e B;INF2608A;03dc03;1 a 4;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-21;0;PC-ENF-03
+108a0772;2026-08-21;2026-08;Teste influenza A e B;INF2608B;cfe42d;5 a 9;CPF;sim;Reagente;Reagente;sim;nao;Cancelado;nao;;;PC-ENF-01
+d76026d6;2026-08-21;2026-08;Teste influenza A e B;INF2608B;cfe42d;15 a 19;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-23;2;PC-ENF-02
+fddf2e4d;2026-08-24;2026-08;Teste COVID-19 (antígeno);COV2608A;a210b8;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-25;1;PC-ENF-02
+81ded3b0;2026-08-24;2026-08;Teste COVID-19 (antígeno);COV2608B;2f8182;15 a 19;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-26;2;PC-ENF-02
+802b8988;2026-08-24;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608A;dad238;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-24;0;PC-ENF-01
+94b70b05;2026-08-24;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608B;a863c2;70 ou mais;CPF;sim;NR;;nao;sim;Baixado;sim;2026-08-24;0;PC-ENF-02
+f3f7a9cf;2026-08-24;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608B;a863c2;20 a 29;CPF;sim;Reagente;Reagente;sim;nao;Baixado;sim;2026-08-25;1;PC-ENF-01
+a35e3968;2026-08-24;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608B;a863c2;20 a 29;CNS;sim;Reagente;;nao;sim;Baixado;sim;2026-08-26;2;PC-ENF-01
+b7b71fb0;2026-08-24;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608C;bd1806;1 a 4;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-26;2;PC-ENF-03
+fa825816;2026-08-24;2026-08;Teste influenza A e B;INF2608A;03dc03;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-24;0;PC-ENF-02
+71d63a78;2026-08-24;2026-08;Teste influenza A e B;INF2608B;cfe42d;1 a 4;CPF;sim;NR;;nao;nao;Baixado;sim;2026-08-25;1;PC-ENF-01
+c7ed62b0;2026-08-25;2026-08;Teste COVID-19 (antígeno);COV2608A;a210b8;10 a 14;CPF;sim;NR;;nao;nao;Baixado;sim;2026-08-28;3;PC-ENF-02
+666d42d9;2026-08-25;2026-08;Teste COVID-19 (antígeno);COV2608A;a210b8;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-25;0;PC-ENF-01
+395b10b1;2026-08-25;2026-08;Teste COVID-19 (antígeno);COV2608B;2f8182;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-26;1;PC-ENF-01
+c2c47d5f;2026-08-25;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608A;dad238;40 a 49;CPF;sim;NR;;nao;nao;Baixado;sim;2026-08-26;1;PC-ENF-01
+e83bf3df;2026-08-25;2026-08;Teste influenza A e B;INF2608A;03dc03;20 a 29;CNS;sim;NR;;nao;sim;Baixado;sim;2026-08-30;5;PC-ENF-01
+97d5a9fd;2026-08-26;2026-08;Teste COVID-19 (antígeno);COV2608A;a210b8;40 a 49;CNS;sim;Reagente;;nao;sim;Baixado;sim;2026-08-28;2;PC-ENF-03
+e65f166b;2026-08-26;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608A;dad238;30 a 39;CNS;sim;Inválido;;nao;nao;Baixado;sim;2026-08-31;5;PC-ENF-01
+bb055e33;2026-08-26;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608A;dad238;20 a 29;CPF;sim;Reagente;NR;sim;nao;Baixado;sim;2026-08-26;0;PC-ENF-01
+e9d24122;2026-08-26;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608A;dad238;5 a 9;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-29;3;PC-ENF-02
+02eceac4;2026-08-26;2026-08;Teste influenza A e B;INF2608A;03dc03;50 a 59;CNS;sim;Reagente;Reagente;sim;nao;Baixado;sim;2026-08-29;3;PC-ENF-01
+bf2f3b1b;2026-08-26;2026-08;Teste influenza A e B;INF2608A;03dc03;60 a 69;CPF;sim;Reagente;NR;sim;nao;Baixado;sim;2026-08-26;0;PC-ENF-02
+ce2404d5;2026-08-26;2026-08;Teste influenza A e B;INF2608A;03dc03;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-30;4;PC-ENF-03
+cc745f34;2026-08-26;2026-08;Teste influenza A e B;INF2608B;cfe42d;50 a 59;CPF;sim;NR;;nao;nao;Baixado;sim;2026-08-27;1;PC-ENF-01
+27716f45;2026-08-27;2026-08;Benzilpenicilina benzatina 1.200.000 UI;BEN2608A;e863db;50 a 59;CNS;sim;;;nao;nao;Baixado;sim;2026-08-29;2;PC-ENF-02
+4977051b;2026-08-27;2026-08;Benzilpenicilina benzatina 1.200.000 UI;BEN2608A;e863db;40 a 49;CNS;sim;;;nao;nao;Baixado;sim;2026-08-28;1;PC-ENF-01
+91a4a360;2026-08-27;2026-08;Benzilpenicilina benzatina 1.200.000 UI;BEN2608A;e863db;20 a 29;CNS;sim;;;nao;nao;Baixado;sim;2026-08-27;0;PC-ENF-02
+a81e05d7;2026-08-27;2026-08;Teste COVID-19 (antígeno);COV2608A;a210b8;30 a 39;CPF;sim;Inválido;;nao;nao;Baixado;sim;2026-08-28;1;PC-ENF-01
+1af3a6bf;2026-08-27;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608A;dad238;1 a 4;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-28;1;PC-ENF-01
+97114a1f;2026-08-27;2026-08;Teste influenza A e B;INF2608A;03dc03;5 a 9;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-28;1;PC-ENF-02
+6e762d78;2026-08-27;2026-08;Teste influenza A e B;INF2608B;cfe42d;30 a 39;CNS;sim;NR;;nao;sim;Baixado;sim;2026-08-28;1;PC-ENF-01
+bb4ed380;2026-08-27;2026-08;Teste influenza A e B;INF2608B;cfe42d;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-08-28;1;PC-ENF-02
+7b11b64a;2026-08-28;2026-08;Teste COVID-19 (antígeno);COV2608B;2f8182;20 a 29;CNS;sim;NR;;nao;sim;Baixado;sim;2026-08-28;0;PC-ENF-01
+be6a381d;2026-08-28;2026-08;Teste dengue (NS1, IgG e IgM);DEN2608A;dad238;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-01;4;PC-ENF-01
+6ce61522;2026-08-28;2026-08;Teste influenza A e B;INF2608A;03dc03;15 a 19;CNS;sim;NR;;nao;sim;Baixado;sim;2026-09-02;5;PC-ENF-01
+db2a1c9b;2026-08-31;2026-08;Benzilpenicilina benzatina 1.200.000 UI;BEN2608A;e863db;50 a 59;CNS;sim;;;nao;nao;Baixado;sim;2026-09-01;1;PC-ENF-01
+8c166b05;2026-08-31;2026-08;Teste influenza A e B;INF2608A;03dc03;70 ou mais;CPF;sim;NR;;nao;nao;Baixado;sim;2026-08-31;0;PC-ENF-03
+68f5317f;2026-08-31;2026-08;Teste influenza A e B;INF2608B;cfe42d;10 a 14;CPF;sim;NR;;nao;nao;Baixado;sim;2026-09-05;5;PC-ENF-03
+536b3838;2026-09-01;2026-09;Benzilpenicilina benzatina 1.200.000 UI;BEN2609A;678419;50 a 59;CNS;sim;;;nao;nao;Baixado;sim;2026-09-01;0;PC-ENF-01
+808544a4;2026-09-01;2026-09;Teste COVID-19 (antígeno);COV2609B;76ebbf;5 a 9;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-01;0;PC-ENF-02
+e9de36eb;2026-09-01;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609A;ea3da9;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-03;2;PC-ENF-01
+830d7560;2026-09-01;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609B;f24b40;20 a 29;CPF;sim;NR;;nao;nao;Baixado;sim;2026-09-02;1;PC-ENF-03
+f508a315;2026-09-01;2026-09;Teste influenza A e B;INF2609A;b9bee5;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-01;0;PC-ENF-03
+a4eae32b;2026-09-01;2026-09;Teste influenza A e B;INF2609A;b9bee5;5 a 9;CPF;sim;NR;;nao;nao;Baixado;sim;2026-09-02;1;PC-ENF-01
+25faac9f;2026-09-01;2026-09;Teste influenza A e B;INF2609A;b9bee5;15 a 19;CNS;sim;NR;;nao;sim;Baixado;sim;2026-09-02;1;PC-ENF-03
+803a0988;2026-09-02;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609A;ea3da9;50 a 59;CNS;sim;NR;;nao;sim;Baixado;sim;2026-09-07;5;PC-ENF-01
+df0d13d9;2026-09-02;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609B;f24b40;menor de 1;CPF;sim;NR;;nao;nao;Baixado;sim;2026-09-02;0;PC-ENF-02
+0955517c;2026-09-03;2026-09;Benzilpenicilina benzatina 1.200.000 UI;BEN2609A;678419;40 a 49;CNS;sim;;;nao;nao;Baixado;sim;2026-09-05;2;PC-ENF-01
+4651d99e;2026-09-03;2026-09;Benzilpenicilina benzatina 1.200.000 UI;BEN2609A;678419;60 a 69;CNS;sim;;;nao;nao;Baixado;sim;2026-09-05;2;PC-ENF-01
+75b1521a;2026-09-03;2026-09;Teste COVID-19 (antígeno);COV2609A;883056;20 a 29;CPF;sim;NR;;nao;nao;Baixado;sim;2026-09-03;0;PC-ENF-02
+c3eef58e;2026-09-03;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609A;ea3da9;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-03;0;PC-ENF-02
+1559a4c3;2026-09-03;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609A;ea3da9;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-05;2;PC-ENF-01
+0c05e5fc;2026-09-03;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609A;ea3da9;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-08;5;PC-ENF-03
+a6349256;2026-09-03;2026-09;Teste influenza A e B;INF2609A;b9bee5;40 a 49;CNS;sim;Inválido;;nao;sim;Baixado;sim;2026-09-04;1;PC-ENF-01
+139ed5a2;2026-09-03;2026-09;Teste influenza A e B;INF2609A;b9bee5;15 a 19;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-06;3;PC-ENF-01
+21ae535e;2026-09-04;2026-09;Teste COVID-19 (antígeno);COV2609A;883056;10 a 14;CNS;sim;Reagente;;nao;nao;Baixado;sim;2026-09-04;0;PC-ENF-01
+0342ff79;2026-09-04;2026-09;Teste COVID-19 (antígeno);COV2609B;76ebbf;10 a 14;CNS;sim;NR;;nao;sim;Baixado;sim;2026-09-05;1;PC-ENF-01
+a582560f;2026-09-04;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609A;ea3da9;15 a 19;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-04;0;PC-ENF-02
+842e1aa0;2026-09-04;2026-09;Teste influenza A e B;INF2609A;b9bee5;1 a 4;CPF;sim;NR;;nao;nao;Baixado;sim;2026-09-04;0;PC-ENF-03
+9f4becb1;2026-09-07;2026-09;Teste COVID-19 (antígeno);COV2609A;883056;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-07;0;PC-ENF-02
+f550711e;2026-09-07;2026-09;Teste COVID-19 (antígeno);COV2609B;76ebbf;30 a 39;CNS;sim;Inválido;;nao;sim;Baixado;sim;2026-09-09;2;PC-ENF-01
+be6021dc;2026-09-07;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609A;ea3da9;15 a 19;CNS;sim;NR;;nao;sim;Baixado;sim;2026-09-07;0;PC-ENF-01
+86bce113;2026-09-07;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609A;ea3da9;1 a 4;CPF;sim;NR;;nao;nao;Baixado;sim;2026-09-07;0;PC-ENF-03
+a209af8a;2026-09-07;2026-09;Teste influenza A e B;INF2609A;b9bee5;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-07;0;PC-ENF-01
+fe0b3c62;2026-09-08;2026-09;Benzilpenicilina benzatina 1.200.000 UI;BEN2609A;678419;20 a 29;CNS;sim;;;nao;nao;Baixado;sim;2026-09-08;0;PC-ENF-01
+c379f897;2026-09-08;2026-09;Benzilpenicilina benzatina 1.200.000 UI;BEN2609A;678419;50 a 59;CNS;sim;;;nao;nao;Baixado;sim;2026-09-08;0;PC-ENF-01
+368c0971;2026-09-08;2026-09;Teste COVID-19 (antígeno);COV2609A;883056;40 a 49;CPF;sim;NR;;nao;sim;Baixado;sim;2026-09-13;5;PC-ENF-02
+395626fd;2026-09-08;2026-09;Teste COVID-19 (antígeno);COV2609A;883056;5 a 9;CNS;sim;Reagente;Reagente;sim;nao;Baixado;sim;2026-09-09;1;PC-ENF-01
+fbaabd20;2026-09-08;2026-09;Teste COVID-19 (antígeno);COV2609B;76ebbf;20 a 29;CNS;sim;NR;;nao;sim;Baixado;sim;2026-09-12;4;PC-ENF-02
+c4a069d2;2026-09-08;2026-09;Teste COVID-19 (antígeno);COV2609B;76ebbf;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-08;0;PC-ENF-01
+b676427d;2026-09-08;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609A;ea3da9;20 a 29;CNS;sim;NR;;nao;nao;Cancelado;nao;;;PC-ENF-02
+70f30550;2026-09-08;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609B;f24b40;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-08;0;PC-ENF-01
+52b1a4d2;2026-09-08;2026-09;Teste influenza A e B;INF2609A;b9bee5;60 a 69;CNS;sim;Reagente;;nao;nao;Baixado;sim;2026-09-08;0;PC-ENF-01
+29be9712;2026-09-09;2026-09;Benzilpenicilina benzatina 1.200.000 UI;BEN2609A;678419;30 a 39;CPF;sim;;;nao;nao;Baixado;sim;2026-09-09;0;PC-ENF-03
+4c11343c;2026-09-09;2026-09;Teste COVID-19 (antígeno);COV2609B;76ebbf;20 a 29;CPF;sim;NR;;nao;nao;Baixado;sim;2026-09-09;0;PC-ENF-02
+46ca9728;2026-09-09;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609A;ea3da9;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-14;5;PC-ENF-03
+5e5d8d76;2026-09-09;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609A;ea3da9;60 a 69;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-11;2;PC-ENF-02
+f2099c3d;2026-09-10;2026-09;Benzilpenicilina benzatina 1.200.000 UI;BEN2609A;678419;60 a 69;CPF;sim;;;nao;nao;Baixado;sim;2026-09-12;2;PC-ENF-01
+24a9510d;2026-09-10;2026-09;Teste COVID-19 (antígeno);COV2609A;883056;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-10;0;PC-ENF-02
+268cf2e1;2026-09-10;2026-09;Teste COVID-19 (antígeno);COV2609A;883056;50 a 59;CNS;sim;Reagente;;nao;nao;Baixado;sim;2026-09-12;2;PC-ENF-02
+aea1cd89;2026-09-10;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609B;f24b40;50 a 59;CPF;sim;Reagente;;nao;nao;Baixado;sim;2026-09-11;1;PC-ENF-01
+e65d486f;2026-09-11;2026-09;Benzilpenicilina benzatina 1.200.000 UI;BEN2609A;678419;40 a 49;CNS;sim;;;nao;nao;Baixado;sim;2026-09-11;0;PC-ENF-03
+2acdf8cd;2026-09-11;2026-09;Benzilpenicilina benzatina 1.200.000 UI;BEN2609A;678419;60 a 69;CNS;sim;;;nao;nao;Baixado;sim;2026-09-12;1;PC-ENF-01
+ff33ba23;2026-09-11;2026-09;Teste COVID-19 (antígeno);COV2609A;883056;40 a 49;CNS;sim;NR;;nao;sim;Baixado;sim;2026-09-14;3;PC-ENF-01
+1c4dd392;2026-09-11;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609A;ea3da9;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-12;1;PC-ENF-02
+be589210;2026-09-11;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609B;f24b40;30 a 39;CPF;sim;NR;;nao;nao;Baixado;sim;2026-09-16;5;PC-ENF-03
+53b2defe;2026-09-14;2026-09;Benzilpenicilina benzatina 1.200.000 UI;BEN2609A;678419;40 a 49;CNS;sim;;;nao;nao;Baixado;sim;2026-09-14;0;PC-ENF-01
+08cec01f;2026-09-14;2026-09;Teste COVID-19 (antígeno);COV2609A;883056;20 a 29;CNS;sim;NR;;nao;sim;Baixado;sim;2026-09-14;0;PC-ENF-03
+0af5df47;2026-09-14;2026-09;Teste COVID-19 (antígeno);COV2609A;883056;5 a 9;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-14;0;PC-ENF-01
+8a9967a8;2026-09-14;2026-09;Teste COVID-19 (antígeno);COV2609A;883056;30 a 39;CNS;sim;Reagente;NR;sim;sim;Baixado;sim;2026-09-14;0;PC-ENF-02
+7742b2d0;2026-09-14;2026-09;Teste COVID-19 (antígeno);COV2609A;883056;20 a 29;CPF;sim;Inválido;;nao;nao;Baixado;sim;2026-09-15;1;PC-ENF-02
+28f8338b;2026-09-14;2026-09;Teste COVID-19 (antígeno);COV2609B;76ebbf;5 a 9;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-14;0;PC-ENF-01
+08e28a2b;2026-09-14;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609A;ea3da9;50 a 59;CPF;sim;NR;;nao;nao;Baixado;sim;2026-09-16;2;PC-ENF-02
+ce92cb5a;2026-09-14;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609A;ea3da9;60 a 69;CNS;sim;NR;;nao;sim;Baixado;sim;2026-09-14;0;PC-ENF-03
+bc87d2a3;2026-09-14;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609B;f24b40;40 a 49;CNS;sim;NR;;nao;sim;Baixado;sim;2026-09-16;2;PC-ENF-03
+df2e7d95;2026-09-15;2026-09;Benzilpenicilina benzatina 1.200.000 UI;BEN2609A;678419;15 a 19;CPF;sim;;;nao;nao;Baixado;sim;2026-09-16;1;PC-ENF-01
+15818d49;2026-09-15;2026-09;Teste COVID-19 (antígeno);COV2609B;76ebbf;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-15;0;PC-ENF-02
+11bcc463;2026-09-15;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609A;ea3da9;20 a 29;CNS;nao;NR;;nao;nao;A revisar;nao;;;PC-ENF-03
+ba91322f;2026-09-15;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609A;ea3da9;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-20;5;PC-ENF-03
+eade6c2a;2026-09-15;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609A;ea3da9;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-17;2;PC-ENF-03
+f7f8ac8b;2026-09-15;2026-09;Teste influenza A e B;INF2609A;b9bee5;40 a 49;CNS;sim;NR;;nao;sim;Baixado;sim;2026-09-18;3;PC-ENF-03
+98289cc6;2026-09-16;2026-09;Teste COVID-19 (antígeno);COV2609A;883056;1 a 4;CNS;sim;Reagente;;nao;nao;Baixado;sim;2026-09-17;1;PC-ENF-02
+17491e9b;2026-09-16;2026-09;Teste COVID-19 (antígeno);COV2609A;883056;30 a 39;CNS;sim;Reagente;Reagente;sim;nao;Baixado;sim;2026-09-16;0;PC-ENF-01
+b335b59b;2026-09-16;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609A;ea3da9;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-16;0;PC-ENF-02
+a9f34536;2026-09-16;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609B;f24b40;1 a 4;CNS;sim;Inválido;;nao;nao;Baixado;sim;2026-09-16;0;PC-ENF-02
+2152286b;2026-09-16;2026-09;Teste influenza A e B;INF2609A;b9bee5;15 a 19;CPF;sim;NR;;nao;sim;Baixado;sim;2026-09-16;0;PC-ENF-01
+757219a5;2026-09-17;2026-09;Benzilpenicilina benzatina 1.200.000 UI;BEN2609A;678419;70 ou mais;CPF;sim;;;nao;nao;Baixado;sim;2026-09-19;2;PC-ENF-01
+7d346286;2026-09-17;2026-09;Teste COVID-19 (antígeno);COV2609A;883056;40 a 49;CPF;sim;NR;;nao;nao;Baixado;sim;2026-09-17;0;PC-ENF-01
+c003bd51;2026-09-17;2026-09;Teste COVID-19 (antígeno);COV2609B;76ebbf;50 a 59;CNS;sim;NR;;nao;sim;Baixado;sim;2026-09-23;6;PC-ENF-01
+5067f000;2026-09-17;2026-09;Teste influenza A e B;INF2609A;b9bee5;20 a 29;CPF;sim;NR;;nao;sim;Baixado;sim;2026-09-17;0;PC-ENF-03
+d39a2e94;2026-09-18;2026-09;Teste COVID-19 (antígeno);COV2609A;883056;40 a 49;CPF;sim;NR;;nao;nao;Baixado;sim;2026-09-19;1;PC-ENF-01
+383c77e8;2026-09-18;2026-09;Teste COVID-19 (antígeno);COV2609A;883056;1 a 4;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-18;0;PC-ENF-02
+2c3edc5f;2026-09-18;2026-09;Teste COVID-19 (antígeno);COV2609B;76ebbf;30 a 39;CPF;sim;NR;;nao;nao;Baixado;sim;2026-09-22;4;PC-ENF-02
+3a56261b;2026-09-18;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609B;f24b40;50 a 59;CNS;sim;Reagente;NR;sim;nao;Baixado;sim;2026-09-18;0;PC-ENF-02
+35dd24b9;2026-09-18;2026-09;Teste influenza A e B;INF2609A;b9bee5;10 a 14;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-18;0;PC-ENF-03
+f9197067;2026-09-18;2026-09;Teste influenza A e B;INF2609A;b9bee5;40 a 49;CNS;sim;Reagente;Reagente;sim;sim;Baixado;sim;2026-09-18;0;PC-ENF-02
+2117249f;2026-09-18;2026-09;Teste influenza A e B;INF2609A;b9bee5;30 a 39;CNS;sim;NR;;nao;sim;Baixado;sim;2026-09-21;3;PC-ENF-01
+781b3ec4;2026-09-21;2026-09;Teste COVID-19 (antígeno);COV2609A;883056;30 a 39;CPF;sim;NR;;nao;sim;Baixado;sim;2026-09-21;0;PC-ENF-02
+a15dc9a5;2026-09-21;2026-09;Teste COVID-19 (antígeno);COV2609A;883056;20 a 29;CNS;sim;Reagente;Reagente;sim;nao;Baixado;sim;2026-09-21;0;PC-ENF-03
+8ff637a4;2026-09-21;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609A;ea3da9;60 a 69;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-22;1;PC-ENF-01
+6ee2d37c;2026-09-21;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609A;ea3da9;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-22;1;PC-ENF-02
+f42d121d;2026-09-21;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609A;ea3da9;10 a 14;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-21;0;PC-ENF-01
+08ae9121;2026-09-21;2026-09;Teste influenza A e B;INF2609A;b9bee5;15 a 19;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-21;0;PC-ENF-03
+40590426;2026-09-22;2026-09;Benzilpenicilina benzatina 1.200.000 UI;BEN2609A;678419;20 a 29;CNS;sim;;;nao;nao;Baixado;sim;2026-09-23;1;PC-ENF-01
+c264a018;2026-09-22;2026-09;Benzilpenicilina benzatina 1.200.000 UI;BEN2609A;678419;20 a 29;CPF;sim;;;nao;nao;Baixado;sim;2026-09-23;1;PC-ENF-02
+e9076f9a;2026-09-22;2026-09;Benzilpenicilina benzatina 1.200.000 UI;BEN2609A;678419;30 a 39;CPF;sim;;;nao;nao;Baixado;sim;2026-09-23;1;PC-ENF-01
+a2ad8666;2026-09-22;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609A;ea3da9;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-23;1;PC-ENF-03
+3c11b126;2026-09-23;2026-09;Benzilpenicilina benzatina 1.200.000 UI;BEN2609A;678419;50 a 59;CNS;sim;;;nao;nao;Baixado;sim;2026-09-23;0;PC-ENF-03
+91d47213;2026-09-23;2026-09;Teste COVID-19 (antígeno);COV2609B;76ebbf;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-24;1;PC-ENF-01
+e0eb0907;2026-09-24;2026-09;Teste COVID-19 (antígeno);COV2609A;883056;5 a 9;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-25;1;PC-ENF-02
+045a90d5;2026-09-24;2026-09;Teste COVID-19 (antígeno);COV2609A;883056;5 a 9;CNS;nao;Reagente;;nao;nao;Baixado;sim;2026-09-26;2;PC-ENF-02
+f69aaebb;2026-09-24;2026-09;Teste COVID-19 (antígeno);COV2609A;883056;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-25;1;PC-ENF-03
+6fb5015f;2026-09-24;2026-09;Teste COVID-19 (antígeno);COV2609B;76ebbf;15 a 19;CNS;sim;NR;;nao;sim;Baixado;sim;2026-09-25;1;PC-ENF-03
+61ed7103;2026-09-24;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609A;ea3da9;40 a 49;CNS;sim;NR;;nao;sim;Baixado;sim;2026-09-24;0;PC-ENF-01
+677e9230;2026-09-24;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609A;ea3da9;15 a 19;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-28;4;PC-ENF-01
+868f6ed1;2026-09-24;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609A;ea3da9;15 a 19;CPF;sim;NR;;nao;sim;Baixado;sim;2026-09-25;1;PC-ENF-01
+d9867bb4;2026-09-24;2026-09;Teste influenza A e B;INF2609A;b9bee5;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-24;0;PC-ENF-03
+291b9658;2026-09-25;2026-09;Benzilpenicilina benzatina 1.200.000 UI;BEN2609A;678419;20 a 29;CPF;sim;;;nao;nao;Baixado;sim;2026-09-26;1;PC-ENF-03
+20512f7f;2026-09-25;2026-09;Teste COVID-19 (antígeno);COV2609A;883056;60 a 69;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-26;1;PC-ENF-01
+cc5286a9;2026-09-25;2026-09;Teste COVID-19 (antígeno);COV2609A;883056;1 a 4;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-25;0;PC-ENF-01
+21a28801;2026-09-25;2026-09;Teste COVID-19 (antígeno);COV2609B;76ebbf;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-25;0;PC-ENF-02
+22f67781;2026-09-25;2026-09;Teste influenza A e B;INF2609A;b9bee5;10 a 14;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-25;0;PC-ENF-02
+896d7193;2026-09-25;2026-09;Teste influenza A e B;INF2609A;b9bee5;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-27;2;PC-ENF-02
+6e13275c;2026-09-25;2026-09;Teste influenza A e B;INF2609A;b9bee5;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-25;0;PC-ENF-01
+5d6550e7;2026-09-28;2026-09;Teste COVID-19 (antígeno);COV2609B;76ebbf;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-29;1;PC-ENF-03
+41fd8528;2026-09-28;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609B;f24b40;60 a 69;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-30;2;PC-ENF-01
+0ceb03ba;2026-09-28;2026-09;Teste dengue (NS1, IgG e IgM);DEN2609B;f24b40;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-10-03;5;PC-ENF-01
+877d3366;2026-09-29;2026-09;Teste COVID-19 (antígeno);COV2609A;883056;10 a 14;CNS;sim;NR;;nao;nao;Baixado;sim;2026-09-29;0;PC-ENF-03
+3be829d3;2026-09-29;2026-09;Teste COVID-19 (antígeno);COV2609B;76ebbf;20 a 29;CPF;sim;NR;;nao;nao;Baixado;sim;2026-09-30;1;PC-ENF-03
+c76b3a8d;2026-09-29;2026-09;Teste influenza A e B;INF2609A;b9bee5;20 a 29;CPF;sim;NR;;nao;nao;Baixado;sim;2026-09-29;0;PC-ENF-02
+6c28afce;2026-09-30;2026-09;Benzilpenicilina benzatina 1.200.000 UI;BEN2609A;678419;70 ou mais;CNS;sim;;;nao;nao;Baixado;sim;2026-10-02;2;PC-ENF-02
+4b16e3fe;2026-09-30;2026-09;Benzilpenicilina benzatina 1.200.000 UI;BEN2609A;678419;30 a 39;CPF;sim;;;nao;nao;Baixado;sim;2026-10-03;3;PC-ENF-01
+b4f07f37;2026-09-30;2026-09;Benzilpenicilina benzatina 1.200.000 UI;BEN2609A;678419;15 a 19;CNS;sim;;;nao;nao;Baixado;sim;2026-10-03;3;PC-ENF-02
+67d68322;2026-10-01;2026-10;Teste COVID-19 (antígeno);COV2610A;34ba15;50 a 59;CNS;sim;Reagente;NR;sim;nao;Baixado;sim;2026-10-02;1;PC-ENF-02
+5aeaaee4;2026-10-01;2026-10;Teste COVID-19 (antígeno);COV2610A;34ba15;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-10-01;0;PC-ENF-01
+bd27e9e9;2026-10-01;2026-10;Teste COVID-19 (antígeno);COV2610B;b440fe;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-10-03;2;PC-ENF-01
+ac4b24ae;2026-10-01;2026-10;Teste COVID-19 (antígeno);COV2610B;b440fe;20 a 29;CPF;sim;NR;;nao;sim;Baixado;sim;2026-10-01;0;PC-ENF-03
+e722a80d;2026-10-02;2026-10;Benzilpenicilina benzatina 1.200.000 UI;BEN2610A;58beb7;20 a 29;CNS;sim;;;nao;nao;Baixado;sim;2026-10-02;0;PC-ENF-01
+37701869;2026-10-02;2026-10;Teste COVID-19 (antígeno);COV2610A;34ba15;1 a 4;CNS;sim;NR;;nao;nao;Baixado;sim;2026-10-03;1;PC-ENF-01
+a824b575;2026-10-02;2026-10;Teste COVID-19 (antígeno);COV2610A;34ba15;5 a 9;CNS;sim;NR;;nao;sim;Baixado;sim;2026-10-04;2;PC-ENF-03
+8cd2822d;2026-10-02;2026-10;Teste dengue (NS1, IgG e IgM);DEN2610A;d1a36f;60 a 69;CNS;sim;NR;;nao;nao;Baixado;sim;2026-10-05;3;PC-ENF-01
+52793333;2026-10-02;2026-10;Teste influenza A e B;INF2610A;85e1cb;1 a 4;CNS;nao;NR;;nao;nao;A revisar;nao;;;PC-ENF-03
+ecf7223c;2026-10-05;2026-10;Benzilpenicilina benzatina 1.200.000 UI;BEN2610A;58beb7;50 a 59;CNS;sim;;;nao;nao;Baixado;sim;2026-10-05;0;PC-ENF-02
+8ba04614;2026-10-05;2026-10;Teste COVID-19 (antígeno);COV2610A;34ba15;40 a 49;CNS;sim;Reagente;NR;sim;sim;Baixado;sim;2026-10-11;6;PC-ENF-03
+40db3978;2026-10-05;2026-10;Teste COVID-19 (antígeno);COV2610B;b440fe;1 a 4;CNS;sim;NR;;nao;nao;Baixado;sim;2026-10-05;0;PC-ENF-03
+0a036b7a;2026-10-05;2026-10;Teste COVID-19 (antígeno);COV2610B;b440fe;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-10-07;2;PC-ENF-03
+38b58023;2026-10-05;2026-10;Teste dengue (NS1, IgG e IgM);DEN2610A;d1a36f;30 a 39;CPF;sim;NR;;nao;nao;Baixado;sim;2026-10-07;2;PC-ENF-02
+6a8f11d7;2026-10-05;2026-10;Teste dengue (NS1, IgG e IgM);DEN2610A;d1a36f;10 a 14;CNS;sim;Inválido;;nao;nao;Baixado;sim;2026-10-06;1;PC-ENF-02
+778688d0;2026-10-06;2026-10;Benzilpenicilina benzatina 1.200.000 UI;BEN2610A;58beb7;40 a 49;CNS;sim;;;nao;nao;Baixado;sim;2026-10-08;2;PC-ENF-01
+d30873a4;2026-10-06;2026-10;Teste COVID-19 (antígeno);COV2610B;b440fe;1 a 4;CNS;sim;NR;;nao;nao;Baixado;sim;2026-10-07;1;PC-ENF-01
+56a0a95e;2026-10-06;2026-10;Teste influenza A e B;INF2610A;85e1cb;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-10-06;0;PC-ENF-01
+8e7f3373;2026-10-06;2026-10;Teste influenza A e B;INF2610A;85e1cb;40 a 49;CNS;sim;NR;;nao;sim;Baixado;sim;2026-10-06;0;PC-ENF-03
+481061ec;2026-10-07;2026-10;Benzilpenicilina benzatina 1.200.000 UI;BEN2610A;58beb7;20 a 29;CNS;sim;;;nao;nao;Baixado;sim;2026-10-07;0;PC-ENF-02
+8173af21;2026-10-07;2026-10;Teste COVID-19 (antígeno);COV2610A;34ba15;20 a 29;CPF;sim;Reagente;;nao;nao;Baixado;sim;2026-10-08;1;PC-ENF-01
+9dbe04cf;2026-10-07;2026-10;Teste COVID-19 (antígeno);COV2610A;34ba15;40 a 49;CPF;sim;NR;;nao;nao;Baixado;sim;2026-10-08;1;PC-ENF-01
+12242ca4;2026-10-07;2026-10;Teste COVID-19 (antígeno);COV2610A;34ba15;10 a 14;CNS;sim;NR;;nao;sim;Baixado;sim;2026-10-08;1;PC-ENF-01
+04c3c69b;2026-10-07;2026-10;Teste COVID-19 (antígeno);COV2610A;34ba15;30 a 39;CNS;sim;Reagente;NR;sim;nao;Baixado;sim;2026-10-09;2;PC-ENF-01
+bbdcc3cd;2026-10-07;2026-10;Teste COVID-19 (antígeno);COV2610B;b440fe;30 a 39;CPF;sim;NR;;nao;nao;Baixado;sim;2026-10-07;0;PC-ENF-03
+db76ea87;2026-10-07;2026-10;Teste dengue (NS1, IgG e IgM);DEN2610A;d1a36f;30 a 39;CNS;sim;NR;;nao;sim;Baixado;sim;2026-10-11;4;PC-ENF-01
+5da98826;2026-10-08;2026-10;Benzilpenicilina benzatina 1.200.000 UI;BEN2610A;58beb7;15 a 19;CNS;sim;;;nao;nao;Baixado;sim;2026-10-08;0;PC-ENF-01
+678cb775;2026-10-08;2026-10;Teste COVID-19 (antígeno);COV2610A;34ba15;20 a 29;CNS;sim;Inválido;;nao;nao;Baixado;sim;2026-10-08;0;PC-ENF-01
+c70e1c41;2026-10-08;2026-10;Teste COVID-19 (antígeno);COV2610A;34ba15;30 a 39;CPF;sim;NR;;nao;nao;Baixado;sim;2026-10-09;1;PC-ENF-02
+5e1f410a;2026-10-08;2026-10;Teste COVID-19 (antígeno);COV2610B;b440fe;10 a 14;CNS;sim;Reagente;NR;sim;nao;Baixado;sim;2026-10-13;5;PC-ENF-02
+dc36c332;2026-10-08;2026-10;Teste COVID-19 (antígeno);COV2610B;b440fe;15 a 19;CPF;sim;NR;;nao;nao;Baixado;sim;2026-10-10;2;PC-ENF-02
+d3014ee8;2026-10-08;2026-10;Teste dengue (NS1, IgG e IgM);DEN2610A;d1a36f;5 a 9;CNS;sim;NR;;nao;nao;Baixado;sim;2026-10-13;5;PC-ENF-01
+c092e3de;2026-10-08;2026-10;Teste influenza A e B;INF2610A;85e1cb;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-10-10;2;PC-ENF-02
+422dd341;2026-10-08;2026-10;Teste influenza A e B;INF2610A;85e1cb;20 a 29;CPF;sim;NR;;nao;nao;Baixado;sim;2026-10-10;2;PC-ENF-02
+f1bacd25;2026-10-09;2026-10;Benzilpenicilina benzatina 1.200.000 UI;BEN2610A;58beb7;40 a 49;CNS;sim;;;nao;nao;Baixado;sim;2026-10-09;0;PC-ENF-02
+e3bfa23e;2026-10-09;2026-10;Teste COVID-19 (antígeno);COV2610A;34ba15;5 a 9;CNS;sim;NR;;nao;nao;Baixado;sim;2026-10-11;2;PC-ENF-02
+a9bf1037;2026-10-09;2026-10;Teste COVID-19 (antígeno);COV2610A;34ba15;20 a 29;CNS;sim;NR;;nao;sim;Baixado;sim;2026-10-09;0;PC-ENF-02
+3af69bc6;2026-10-09;2026-10;Teste COVID-19 (antígeno);COV2610B;b440fe;30 a 39;CNS;sim;Reagente;Reagente;sim;nao;Baixado;sim;2026-10-09;0;PC-ENF-02
+6a9b378d;2026-10-09;2026-10;Teste dengue (NS1, IgG e IgM);DEN2610A;d1a36f;15 a 19;CNS;sim;Reagente;NR;sim;sim;Baixado;sim;2026-10-09;0;PC-ENF-01
+847c91b2;2026-10-09;2026-10;Teste influenza A e B;INF2610A;85e1cb;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-10-09;0;PC-ENF-02
+92d30576;2026-10-12;2026-10;Benzilpenicilina benzatina 1.200.000 UI;BEN2610A;58beb7;20 a 29;CNS;sim;;;nao;nao;Baixado;sim;2026-10-14;2;PC-ENF-01
+1086f05e;2026-10-12;2026-10;Benzilpenicilina benzatina 1.200.000 UI;BEN2610A;58beb7;40 a 49;CNS;sim;;;nao;nao;Baixado;sim;2026-10-13;1;PC-ENF-01
+21e8bc6d;2026-10-12;2026-10;Teste COVID-19 (antígeno);COV2610B;b440fe;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-10-13;1;PC-ENF-01
+5532530d;2026-10-12;2026-10;Teste dengue (NS1, IgG e IgM);DEN2610A;d1a36f;10 a 14;CNS;sim;NR;;nao;nao;Não encontrado no GSS;nao;;;PC-ENF-01
+46ce6280;2026-10-12;2026-10;Teste influenza A e B;INF2610A;85e1cb;60 a 69;CPF;sim;NR;;nao;nao;Não encontrado no GSS;nao;;;PC-ENF-03
+9bdf1395;2026-10-13;2026-10;Benzilpenicilina benzatina 1.200.000 UI;BEN2610A;58beb7;30 a 39;CNS;sim;;;nao;nao;Baixado;sim;2026-10-13;0;PC-ENF-02
+462694d1;2026-10-13;2026-10;Benzilpenicilina benzatina 1.200.000 UI;BEN2610A;58beb7;30 a 39;CPF;sim;;;nao;nao;Baixado;sim;2026-10-16;3;PC-ENF-02
+91ce1101;2026-10-13;2026-10;Teste COVID-19 (antígeno);COV2610B;b440fe;20 a 29;CPF;sim;NR;;nao;nao;Baixado;sim;2026-10-15;2;PC-ENF-02
+b133eadb;2026-10-13;2026-10;Teste dengue (NS1, IgG e IgM);DEN2610A;d1a36f;1 a 4;CPF;sim;NR;;nao;sim;Baixado;sim;2026-10-19;6;PC-ENF-02
+5b94d33e;2026-10-13;2026-10;Teste dengue (NS1, IgG e IgM);DEN2610A;d1a36f;20 a 29;CPF;sim;NR;;nao;sim;Baixado;sim;2026-10-14;1;PC-ENF-01
+522cebaf;2026-10-14;2026-10;Teste influenza A e B;INF2610A;85e1cb;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-10-15;1;PC-ENF-02
+fae493ef;2026-10-15;2026-10;Teste COVID-19 (antígeno);COV2610A;34ba15;1 a 4;CNS;sim;NR;;nao;sim;Baixado;sim;2026-10-15;0;PC-ENF-02
+b55e5582;2026-10-15;2026-10;Teste COVID-19 (antígeno);COV2610A;34ba15;40 a 49;CPF;sim;Reagente;NR;sim;nao;Baixado;sim;2026-10-15;0;PC-ENF-01
+3bb85b4a;2026-10-15;2026-10;Teste COVID-19 (antígeno);COV2610B;b440fe;40 a 49;CNS;sim;NR;;nao;sim;Baixado;sim;2026-10-16;1;PC-ENF-01
+f644eea9;2026-10-15;2026-10;Teste dengue (NS1, IgG e IgM);DEN2610A;d1a36f;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-10-15;0;PC-ENF-01
+84c9b15f;2026-10-16;2026-10;Benzilpenicilina benzatina 1.200.000 UI;BEN2610A;58beb7;20 a 29;CPF;sim;;;nao;nao;Baixado;sim;2026-10-18;2;PC-ENF-02
+b020c2fd;2026-10-16;2026-10;Benzilpenicilina benzatina 1.200.000 UI;BEN2610A;58beb7;50 a 59;CNS;sim;;;nao;nao;Baixado;sim;2026-10-17;1;PC-ENF-01
+e1b4e978;2026-10-16;2026-10;Teste COVID-19 (antígeno);COV2610B;b440fe;5 a 9;CNS;sim;NR;;nao;nao;Baixado;sim;2026-10-17;1;PC-ENF-02
+b6af0459;2026-10-16;2026-10;Teste influenza A e B;INF2610A;85e1cb;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-10-18;2;PC-ENF-03
+a4fb7588;2026-10-19;2026-10;Teste COVID-19 (antígeno);COV2610A;34ba15;30 a 39;CNS;sim;Inválido;;nao;nao;Baixado;sim;2026-10-19;0;PC-ENF-02
+9cb21aa6;2026-10-19;2026-10;Teste COVID-19 (antígeno);COV2610B;b440fe;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-10-21;2;PC-ENF-01
+c0fdd1e7;2026-10-19;2026-10;Teste dengue (NS1, IgG e IgM);DEN2610A;d1a36f;20 a 29;CNS;sim;Reagente;NR;sim;sim;Baixado;sim;2026-10-19;0;PC-ENF-02
+e01e34b0;2026-10-19;2026-10;Teste influenza A e B;INF2610A;85e1cb;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-10-19;0;PC-ENF-02
+77752e6c;2026-10-20;2026-10;Benzilpenicilina benzatina 1.200.000 UI;BEN2610A;58beb7;60 a 69;CNS;sim;;;nao;nao;Baixado;sim;2026-10-25;5;PC-ENF-02
+da15c351;2026-10-20;2026-10;Benzilpenicilina benzatina 1.200.000 UI;BEN2610A;58beb7;40 a 49;CNS;sim;;;nao;nao;Baixado;sim;2026-10-20;0;PC-ENF-01
+ba7c3a02;2026-10-20;2026-10;Benzilpenicilina benzatina 1.200.000 UI;BEN2610A;58beb7;60 a 69;CPF;sim;;;nao;nao;Baixado;sim;2026-10-22;2;PC-ENF-01
+9939c1df;2026-10-20;2026-10;Teste COVID-19 (antígeno);COV2610A;34ba15;20 a 29;CPF;sim;NR;;nao;sim;Baixado;sim;2026-10-25;5;PC-ENF-03
+4cdf545a;2026-10-20;2026-10;Teste COVID-19 (antígeno);COV2610B;b440fe;10 a 14;CNS;sim;NR;;nao;sim;Baixado;sim;2026-10-20;0;PC-ENF-01
+952cb8e2;2026-10-20;2026-10;Teste dengue (NS1, IgG e IgM);DEN2610A;d1a36f;40 a 49;CNS;sim;NR;;nao;nao;Cancelado;nao;;;PC-ENF-02
+275c2992;2026-10-20;2026-10;Teste dengue (NS1, IgG e IgM);DEN2610A;d1a36f;20 a 29;CPF;sim;NR;;nao;nao;Baixado;sim;2026-10-23;3;PC-ENF-02
+841373c1;2026-10-20;2026-10;Teste dengue (NS1, IgG e IgM);DEN2610A;d1a36f;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-10-20;0;PC-ENF-01
+eb3eeca3;2026-10-20;2026-10;Teste influenza A e B;INF2610A;85e1cb;15 a 19;CNS;sim;NR;;nao;nao;Baixado;sim;2026-10-20;0;PC-ENF-02
+f19a02a0;2026-10-21;2026-10;Benzilpenicilina benzatina 1.200.000 UI;BEN2610A;58beb7;60 a 69;CNS;sim;;;nao;nao;Baixado;sim;2026-10-24;3;PC-ENF-02
+b26428ae;2026-10-21;2026-10;Benzilpenicilina benzatina 1.200.000 UI;BEN2610A;58beb7;40 a 49;CNS;sim;;;nao;nao;Baixado;sim;2026-10-22;1;PC-ENF-01
+48fec11b;2026-10-21;2026-10;Teste COVID-19 (antígeno);COV2610A;34ba15;50 a 59;CPF;sim;NR;;nao;sim;Baixado;sim;2026-10-22;1;PC-ENF-02
+90e771d4;2026-10-21;2026-10;Teste COVID-19 (antígeno);COV2610A;34ba15;10 a 14;CNS;sim;NR;;nao;nao;Baixado;sim;2026-10-23;2;PC-ENF-02
+a7e1537d;2026-10-21;2026-10;Teste COVID-19 (antígeno);COV2610B;b440fe;20 a 29;CNS;sim;Reagente;Reagente;sim;nao;Baixado;sim;2026-10-21;0;PC-ENF-03
+2ec713b0;2026-10-21;2026-10;Teste dengue (NS1, IgG e IgM);DEN2610A;d1a36f;1 a 4;CPF;sim;NR;;nao;nao;Baixado;sim;2026-10-21;0;PC-ENF-01
+6719e191;2026-10-21;2026-10;Teste dengue (NS1, IgG e IgM);DEN2610A;d1a36f;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-10-21;0;PC-ENF-02
+bb7e931f;2026-10-22;2026-10;Benzilpenicilina benzatina 1.200.000 UI;BEN2610A;58beb7;1 a 4;CPF;sim;;;nao;nao;Baixado;sim;2026-10-25;3;PC-ENF-02
+6e3f9e91;2026-10-22;2026-10;Teste COVID-19 (antígeno);COV2610A;34ba15;30 a 39;CPF;sim;NR;;nao;sim;Baixado;sim;2026-10-22;0;PC-ENF-02
+2d31daeb;2026-10-22;2026-10;Teste COVID-19 (antígeno);COV2610A;34ba15;1 a 4;CPF;sim;NR;;nao;nao;Baixado;sim;2026-10-22;0;PC-ENF-01
+3656ad29;2026-10-22;2026-10;Teste COVID-19 (antígeno);COV2610B;b440fe;10 a 14;CNS;sim;NR;;nao;nao;Baixado;sim;2026-10-22;0;PC-ENF-03
+4e9bf891;2026-10-22;2026-10;Teste COVID-19 (antígeno);COV2610B;b440fe;20 a 29;CPF;sim;NR;;nao;nao;Baixado;sim;2026-10-22;0;PC-ENF-01
+1c0fb0ad;2026-10-22;2026-10;Teste dengue (NS1, IgG e IgM);DEN2610A;d1a36f;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-10-24;2;PC-ENF-01
+e2e14dc2;2026-10-22;2026-10;Teste dengue (NS1, IgG e IgM);DEN2610A;d1a36f;10 a 14;CNS;sim;NR;;nao;nao;Baixado;sim;2026-10-22;0;PC-ENF-02
+680506f5;2026-10-22;2026-10;Teste influenza A e B;INF2610A;85e1cb;1 a 4;CPF;sim;NR;;nao;nao;Baixado;sim;2026-10-23;1;PC-ENF-01
+8b650c50;2026-10-23;2026-10;Teste COVID-19 (antígeno);COV2610B;b440fe;50 a 59;CNS;sim;Reagente;;nao;nao;Baixado;sim;2026-10-27;4;PC-ENF-03
+b130d340;2026-10-23;2026-10;Teste influenza A e B;INF2610A;85e1cb;15 a 19;CPF;sim;NR;;nao;nao;Baixado;sim;2026-10-23;0;PC-ENF-03
+50988c54;2026-10-26;2026-10;Benzilpenicilina benzatina 1.200.000 UI;BEN2610A;58beb7;30 a 39;CPF;sim;;;nao;nao;Baixado;sim;2026-10-27;1;PC-ENF-02
+9b910c67;2026-10-26;2026-10;Benzilpenicilina benzatina 1.200.000 UI;BEN2610A;58beb7;20 a 29;CPF;sim;;;nao;nao;Baixado;sim;2026-10-28;2;PC-ENF-02
+0fc7793d;2026-10-26;2026-10;Teste COVID-19 (antígeno);COV2610A;34ba15;20 a 29;CNS;sim;Reagente;;nao;nao;Baixado;sim;2026-10-26;0;PC-ENF-03
+9d4ab3e1;2026-10-26;2026-10;Teste influenza A e B;INF2610A;85e1cb;10 a 14;CNS;sim;NR;;nao;nao;Baixado;sim;2026-10-28;2;PC-ENF-03
+b2900127;2026-10-27;2026-10;Teste COVID-19 (antígeno);COV2610A;34ba15;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-10-28;1;PC-ENF-02
+cddf32a6;2026-10-27;2026-10;Teste COVID-19 (antígeno);COV2610A;34ba15;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-10-27;0;PC-ENF-02
+0c071b19;2026-10-27;2026-10;Teste dengue (NS1, IgG e IgM);DEN2610A;d1a36f;1 a 4;CPF;sim;NR;;nao;nao;Baixado;sim;2026-10-28;1;PC-ENF-01
+24f67324;2026-10-28;2026-10;Benzilpenicilina benzatina 1.200.000 UI;BEN2610A;58beb7;15 a 19;CNS;sim;;;nao;nao;Baixado;sim;2026-10-30;2;PC-ENF-01
+c3760fd3;2026-10-28;2026-10;Benzilpenicilina benzatina 1.200.000 UI;BEN2610A;58beb7;30 a 39;CNS;sim;;;nao;nao;Baixado;sim;2026-10-28;0;PC-ENF-01
+e81d00d1;2026-10-28;2026-10;Teste COVID-19 (antígeno);COV2610B;b440fe;40 a 49;CNS;sim;NR;;nao;sim;Baixado;sim;2026-10-29;1;PC-ENF-01
+60aaa7b8;2026-10-28;2026-10;Teste dengue (NS1, IgG e IgM);DEN2610A;d1a36f;30 a 39;CPF;sim;NR;;nao;nao;Baixado;sim;2026-11-01;4;PC-ENF-01
+4eccad7f;2026-10-28;2026-10;Teste dengue (NS1, IgG e IgM);DEN2610A;d1a36f;20 a 29;CPF;sim;NR;;nao;nao;Baixado;sim;2026-10-30;2;PC-ENF-01
+bfe2af89;2026-10-28;2026-10;Teste dengue (NS1, IgG e IgM);DEN2610A;d1a36f;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-10-29;1;PC-ENF-01
+85b1b7ca;2026-10-28;2026-10;Teste influenza A e B;INF2610A;85e1cb;40 a 49;CNS;sim;NR;;nao;nao;Baixado;sim;2026-10-30;2;PC-ENF-01
+ed018732;2026-10-29;2026-10;Benzilpenicilina benzatina 1.200.000 UI;BEN2610A;58beb7;40 a 49;CPF;sim;;;nao;nao;Baixado;sim;2026-10-31;2;PC-ENF-02
+8d4eab43;2026-10-29;2026-10;Teste dengue (NS1, IgG e IgM);DEN2610A;d1a36f;5 a 9;CNS;sim;NR;;nao;nao;Baixado;sim;2026-11-03;5;PC-ENF-02
+a47f6336;2026-10-29;2026-10;Teste dengue (NS1, IgG e IgM);DEN2610A;d1a36f;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-10-31;2;PC-ENF-01
+71e1b716;2026-10-30;2026-10;Benzilpenicilina benzatina 1.200.000 UI;BEN2610A;58beb7;30 a 39;CNS;sim;;;nao;nao;Baixado;sim;2026-10-30;0;PC-ENF-03
+0f1cf3ff;2026-10-30;2026-10;Teste COVID-19 (antígeno);COV2610A;34ba15;40 a 49;CNS;sim;Reagente;;nao;sim;Não encontrado no GSS;nao;;;PC-ENF-02
+c598ebf4;2026-10-30;2026-10;Teste dengue (NS1, IgG e IgM);DEN2610A;d1a36f;20 a 29;CNS;sim;NR;;nao;sim;Baixado;sim;2026-10-31;1;PC-ENF-02
+c99deb08;2026-11-02;2026-11;Teste COVID-19 (antígeno);COV2611A;3f1dbc;20 a 29;CPF;sim;NR;;nao;nao;Baixado;sim;2026-11-04;2;PC-ENF-02
+9345f538;2026-11-03;2026-11;Benzilpenicilina benzatina 1.200.000 UI;BEN2611A;809627;50 a 59;CNS;sim;;;nao;nao;Baixado;sim;2026-11-04;1;PC-ENF-03
+de06c219;2026-11-03;2026-11;Teste COVID-19 (antígeno);COV2611A;3f1dbc;5 a 9;CNS;sim;NR;;nao;nao;Baixado;sim;2026-11-05;2;PC-ENF-03
+0eb1dbe3;2026-11-03;2026-11;Teste COVID-19 (antígeno);COV2611A;3f1dbc;30 a 39;CPF;sim;NR;;nao;nao;Baixado;sim;2026-11-04;1;PC-ENF-02
+717a2a0f;2026-11-03;2026-11;Teste COVID-19 (antígeno);COV2611A;3f1dbc;50 a 59;CNS;sim;NR;;nao;sim;Baixado;sim;2026-11-03;0;PC-ENF-02
+467b9958;2026-11-03;2026-11;Teste dengue (NS1, IgG e IgM);DEN2611A;5953e0;60 a 69;CNS;sim;NR;;nao;nao;Baixado;sim;2026-11-04;1;PC-ENF-01
+8b4bfa02;2026-11-03;2026-11;Teste influenza A e B;INF2611A;a4efd1;10 a 14;CPF;sim;NR;;nao;nao;Baixado;sim;2026-11-05;2;PC-ENF-02
+3af95f85;2026-11-04;2026-11;Teste COVID-19 (antígeno);COV2611A;3f1dbc;70 ou mais;CPF;sim;NR;;nao;nao;Baixado;sim;2026-11-04;0;PC-ENF-01
+af8f44ee;2026-11-04;2026-11;Teste dengue (NS1, IgG e IgM);DEN2611A;5953e0;30 a 39;CNS;sim;Reagente;NR;sim;sim;Baixado;sim;2026-11-04;0;PC-ENF-01
+e196deda;2026-11-04;2026-11;Teste dengue (NS1, IgG e IgM);DEN2611A;5953e0;60 a 69;CNS;sim;NR;;nao;nao;Baixado;sim;2026-11-06;2;PC-ENF-02
+ad0db306;2026-11-05;2026-11;Benzilpenicilina benzatina 1.200.000 UI;BEN2611A;809627;30 a 39;CNS;sim;;;nao;nao;Baixado;sim;2026-11-08;3;PC-ENF-01
+edcde7bd;2026-11-05;2026-11;Benzilpenicilina benzatina 1.200.000 UI;BEN2611A;809627;20 a 29;CNS;sim;;;nao;nao;Baixado;sim;2026-11-06;1;PC-ENF-02
+90a0914d;2026-11-05;2026-11;Teste COVID-19 (antígeno);COV2611A;3f1dbc;5 a 9;CNS;sim;NR;;nao;nao;Baixado;sim;2026-11-07;2;PC-ENF-01
+84df1650;2026-11-05;2026-11;Teste dengue (NS1, IgG e IgM);DEN2611A;5953e0;15 a 19;CPF;sim;Reagente;NR;sim;sim;Baixado;sim;2026-11-05;0;PC-ENF-03
+20c3eafb;2026-11-06;2026-11;Benzilpenicilina benzatina 1.200.000 UI;BEN2611A;809627;1 a 4;CNS;sim;;;nao;nao;Baixado;sim;2026-11-06;0;PC-ENF-03
+523f1207;2026-11-06;2026-11;Teste COVID-19 (antígeno);COV2611A;3f1dbc;50 a 59;CNS;sim;NR;;nao;sim;Baixado;sim;2026-11-08;2;PC-ENF-03
+2715d5f7;2026-11-06;2026-11;Teste COVID-19 (antígeno);COV2611A;3f1dbc;40 a 49;CPF;sim;NR;;nao;sim;Cancelado;nao;;;PC-ENF-02
+8b21921a;2026-11-06;2026-11;Teste COVID-19 (antígeno);COV2611A;3f1dbc;20 a 29;CNS;sim;NR;;nao;nao;Baixado;sim;2026-11-09;3;PC-ENF-03
+b0d5cc63;2026-11-06;2026-11;Teste COVID-19 (antígeno);COV2611A;3f1dbc;50 a 59;CNS;sim;NR;;nao;sim;Baixado;sim;2026-11-06;0;PC-ENF-01
+179efcb7;2026-11-06;2026-11;Teste COVID-19 (antígeno);COV2611A;3f1dbc;40 a 49;CNS;sim;NR;;nao;sim;Baixado;sim;2026-11-10;4;PC-ENF-01
+23d63cfc;2026-11-06;2026-11;Teste COVID-19 (antígeno);COV2611A;3f1dbc;20 a 29;CNS;sim;Reagente;Reagente;sim;nao;Baixado;sim;2026-11-07;1;PC-ENF-01
+7b7eee18;2026-11-06;2026-11;Teste dengue (NS1, IgG e IgM);DEN2611A;5953e0;30 a 39;CPF;sim;NR;;nao;nao;Baixado;sim;2026-11-10;4;PC-ENF-01
+19a2ea32;2026-11-09;2026-11;Benzilpenicilina benzatina 1.200.000 UI;BEN2611A;809627;50 a 59;CNS;sim;;;nao;nao;Baixado;sim;2026-11-09;0;PC-ENF-03
+631798d9;2026-11-09;2026-11;Benzilpenicilina benzatina 1.200.000 UI;BEN2611A;809627;30 a 39;CNS;sim;;;nao;nao;Baixado;sim;2026-11-09;0;PC-ENF-02
+017878d5;2026-11-09;2026-11;Benzilpenicilina benzatina 1.200.000 UI;BEN2611A;809627;30 a 39;CNS;sim;;;nao;nao;Baixado;sim;2026-11-09;0;PC-ENF-01
+0ed1b56f;2026-11-09;2026-11;Teste influenza A e B;INF2611A;a4efd1;30 a 39;CNS;sim;NR;;nao;nao;Baixado;sim;2026-11-10;1;PC-ENF-01
+e09b8c2e;2026-11-10;2026-11;Benzilpenicilina benzatina 1.200.000 UI;BEN2611A;809627;20 a 29;CPF;sim;;;nao;nao;Pendente de baixa;nao;;;PC-ENF-02
+a560b78a;2026-11-10;2026-11;Teste COVID-19 (antígeno);COV2611A;3f1dbc;10 a 14;CNS;sim;NR;;nao;sim;Baixado;sim;2026-11-10;0;PC-ENF-02
+8a927192;2026-11-11;2026-11;Benzilpenicilina benzatina 1.200.000 UI;BEN2611A;809627;60 a 69;CNS;sim;;;nao;nao;Pendente de baixa;nao;;;PC-ENF-02
+6e652e50;2026-11-11;2026-11;Teste COVID-19 (antígeno);COV2611A;3f1dbc;50 a 59;CNS;sim;NR;;nao;sim;Pendente de baixa;nao;;;PC-ENF-02
+bb321c8b;2026-11-11;2026-11;Teste COVID-19 (antígeno);COV2611A;3f1dbc;20 a 29;CNS;sim;NR;;nao;nao;Pendente de baixa;nao;;;PC-ENF-01
+ed2e746e;2026-11-11;2026-11;Teste COVID-19 (antígeno);COV2611A;3f1dbc;40 a 49;CNS;sim;NR;;nao;sim;Pendente de baixa;nao;;;PC-ENF-01
+589760e5;2026-11-11;2026-11;Teste COVID-19 (antígeno);COV2611A;3f1dbc;10 a 14;CNS;sim;NR;;nao;nao;Baixado;sim;2026-11-14;3;PC-ENF-02
+5fce4236;2026-11-11;2026-11;Teste dengue (NS1, IgG e IgM);DEN2611A;5953e0;20 a 29;CNS;sim;NR;;nao;nao;Pendente de baixa;nao;;;PC-ENF-01
+e6e96c71;2026-11-11;2026-11;Teste influenza A e B;INF2611A;a4efd1;50 a 59;CPF;sim;NR;;nao;sim;Pendente de baixa;nao;;;PC-ENF-03
+206fc1f3;2026-11-11;2026-11;Teste influenza A e B;INF2611A;a4efd1;5 a 9;CNS;sim;NR;;nao;nao;Pendente de baixa;nao;;;PC-ENF-02
+e4e3eaa1;2026-11-12;2026-11;Benzilpenicilina benzatina 1.200.000 UI;BEN2611A;809627;40 a 49;CPF;sim;;;nao;nao;Baixado;sim;2026-11-13;1;PC-ENF-02
+4b087753;2026-11-12;2026-11;Teste dengue (NS1, IgG e IgM);DEN2611A;5953e0;5 a 9;CNS;nao;Reagente;;nao;sim;Pendente de baixa;nao;;;PC-ENF-03
+27c9b2d0;2026-11-12;2026-11;Teste dengue (NS1, IgG e IgM);DEN2611A;5953e0;50 a 59;CNS;sim;NR;;nao;nao;Baixado;sim;2026-11-12;0;PC-ENF-01
+66ad35c9;2026-11-12;2026-11;Teste influenza A e B;INF2611A;a4efd1;60 a 69;CNS;sim;NR;;nao;sim;Baixado;sim;2026-11-14;2;PC-ENF-03
+207b41b8;2026-11-13;2026-11;Teste COVID-19 (antígeno);COV2611A;3f1dbc;20 a 29;CNS;sim;NR;;nao;nao;Pendente de baixa;nao;;;PC-ENF-03
+b30ea747;2026-11-13;2026-11;Teste COVID-19 (antígeno);COV2611A;3f1dbc;5 a 9;CNS;sim;NR;;nao;nao;Pendente de baixa;nao;;;PC-ENF-02
+c2c58b88;2026-11-13;2026-11;Teste dengue (NS1, IgG e IgM);DEN2611A;5953e0;15 a 19;CNS;sim;NR;;nao;nao;Pendente de baixa;nao;;;PC-ENF-01
+</script>
+<script>
+(function(){
+var CORES=['var(--c1)','var(--c2)','var(--c3)','var(--c4)'],R=[],NOMES=[];
+function $(s){return document.querySelector(s);}
+function parseCSV(t){t=t.replace(/^﻿/,'').replace(/\r/g,'');var L=t.split('\n').filter(function(x){return x.trim();}),c=L.shift().split(';');return L.map(function(l){var v=[],cur='',q=false,i,ch;for(i=0;i<l.length;i++){ch=l[i];if(q){if(ch==='"'){if(l[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=ch;}else if(ch==='"')q=true;else if(ch===';'){v.push(cur);cur='';}else cur+=ch;}v.push(cur);var o={};c.forEach(function(k,j){o[k]=v[j]==null?'':v[j];});return o;});}
+function f1(x){return (Math.round(x*10)/10).toString().replace('.',',');}
+function pct(a,b){return b?f1(100*a/b)+'%':'—';}
+function uniq(a){return a.filter(function(x,i){return a.indexOf(x)===i;});}
+function carrega(rows,rotulo){R=rows;NOMES=uniq(R.map(function(r){return r.material;})).sort();var ms=uniq(R.map(function(r){return r.ano_mes;})).sort();
+ $('#fmat').innerHTML='<option value="">Todos</option>'+NOMES.map(function(n){return '<option>'+n+'</option>';}).join('');
+ $('#fde').innerHTML=ms.map(function(m){return '<option>'+m+'</option>';}).join('');$('#fate').innerHTML=$('#fde').innerHTML;$('#fate').value=ms[ms.length-1];
+ $('#tag').textContent=rotulo;desenha();}
+function filtra(){var m=$('#fmat').value,a=$('#fde').value,b=$('#fate').value;return R.filter(function(r){return (!m||r.material===m)&&r.ano_mes>=a&&r.ano_mes<=b;});}
+function bars(el,itens,fmt,fixo){var mx=fixo||Math.max.apply(null,itens.map(function(i){return i.v;}).concat([1]));el.innerHTML=itens.map(function(i){return '<div class="hb"><span>'+i.l+'</span><span class="t"><i style="width:'+(100*i.v/mx)+'%"></i></span><span class="v">'+(fmt?fmt(i):i.v)+'</span></div>';}).join('')||'<span class="mut">Sem dados.</span>';}
+function empilhado(rs){var ms=uniq(rs.map(function(r){return r.ano_mes;})).sort(),mats=NOMES,W=560,H=230,pl=34,pb=26,pt=18,bw=Math.min(54,(W-pl)/ms.length*0.62),mx=1,tot={};
+ ms.forEach(function(m){tot[m]=rs.filter(function(r){return r.ano_mes===m;}).length;mx=Math.max(mx,tot[m]);});
+ var esc=(H-pb-pt)/mx,s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Testes por mês, empilhados por material">';
+ [0,0.5,1].forEach(function(f){var y=H-pb-f*mx*esc;s+='<line x1="'+pl+'" x2="'+W+'" y1="'+y+'" y2="'+y+'" stroke="var(--bd)"/><text class="m" x="'+(pl-6)+'" y="'+(y+4)+'" text-anchor="end">'+Math.round(f*mx)+'</text>';});
+ ms.forEach(function(m,i){var x=pl+(i+0.5)*(W-pl)/ms.length-bw/2,y=H-pb;mats.forEach(function(n,k){var c=rs.filter(function(r){return r.ano_mes===m&&r.material===n;}).length,h=c*esc;if(c){y-=h;s+='<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+h+'" fill="'+CORES[k%4]+'"><title>'+m+' · '+n+': '+c+'</title></rect>';}});
+  s+='<text x="'+(x+bw/2)+'" y="'+(y-4)+'" text-anchor="middle">'+tot[m]+'</text><text class="m" x="'+(x+bw/2)+'" y="'+(H-8)+'" text-anchor="middle">'+m.slice(5)+'/'+m.slice(2,4)+'</text>';});
+ return s+'</svg>';}
+function resumo(rs){var g={};rs.forEach(function(r){var k=r.ano_mes+'|'+r.material,x=g[k]||(g[k]={ym:r.ano_mes,mat:r.material,n:0,bx:0,pe:0,ne:0,ca:0,inv:0,re:0,nr:0,iv:0,s2:0,dd:0,nd:0});
+ if(r.situacao==='Cancelado'){x.ca++;return;}x.n++;if(r.baixado==='sim'){x.bx++;if(r.dias_ate_baixa!==''){x.dd+=+r.dias_ate_baixa;x.nd++;}}else if(r.situacao==='Não encontrado no GSS')x.ne++;else x.pe++;
+ if(r.documento_valido==='nao')x.inv++;if(r.resultado_1==='Reagente')x.re++;else if(r.resultado_1==='NR')x.nr++;else if(r.resultado_1==='Inválido')x.iv++;if(r.fez_2o_teste==='sim')x.s2++;});
+ return Object.keys(g).sort().map(function(k){return g[k];});}
+function desenha(){var rs=filtra(),ok=rs.filter(function(r){return r.situacao!=='Cancelado';}),n=ok.length,bx=ok.filter(function(r){return r.baixado==='sim';}),
+ pend=ok.filter(function(r){return r.situacao==='Pendente de baixa';}).length,inv=ok.filter(function(r){return r.documento_valido==='nao';}).length,
+ dias=bx.filter(function(r){return r.dias_ate_baixa!=='';}).map(function(r){return +r.dias_ate_baixa;}),med=dias.length?dias.reduce(function(a,b){return a+b;},0)/dias.length:null,
+ comRes=ok.filter(function(r){return r.resultado_1;}),re=comRes.filter(function(r){return r.resultado_1==='Reagente';}).length;
+ $('#kpis').innerHTML=[[n,'testes registrados'],[pct(bx.length,n),'já baixados no GSS'],[pend,'pendentes de baixa'],[pct(inv,n),'com número inválido registrado ('+inv+')'],[med==null?'—':f1(med)+' d','tempo médio até a baixa'],[pct(re,comRes.length),'reagentes (n='+comRes.length+')']].map(function(k){return '<div class="kpi"><b>'+k[0]+'</b><span>'+k[1]+'</span></div>';}).join('');
+ $('#leg1').innerHTML=NOMES.map(function(m,i){return '<span><i style="background:'+CORES[i%4]+'"></i>'+m.replace(/ \(.*|\s1\.200.*/,'')+'</span>';}).join('');
+ $('#g1').innerHTML=empilhado(ok);
+ var pos=NOMES.map(function(m){var a=comRes.filter(function(r){return r.material===m;});return{l:m.replace(/ \(.*/,'').replace('Teste ',''),v:a.length?100*a.filter(function(r){return r.resultado_1==='Reagente';}).length/a.length:0,n:a.length};}).filter(function(i){return i.n;});
+ bars($('#g2'),pos,function(i){return f1(i.v)+'% (n='+i.n+')';},Math.max(30,Math.ceil(Math.max.apply(null,pos.map(function(i){return i.v;}).concat([0]))*1.15)));
+ var FX=['menor de 1','1 a 4','5 a 9','10 a 14','15 a 19','20 a 29','30 a 39','40 a 49','50 a 59','60 a 69','70 ou mais'];
+ bars($('#g3'),FX.map(function(f){return{l:f,v:ok.filter(function(r){return r.faixa_etaria===f;}).length};}));
+ bars($('#g4'),[0,1,2,3,4,5,6].map(function(d){return{l:d===6?'6 dias ou mais':(d===0?'no mesmo dia':d+' dia'+(d>1?'s':'')),v:dias.filter(function(x){return d===6?x>=6:x===d;}).length};}));
+ bars($('#g5'),uniq(ok.map(function(r){return r.posto;})).sort().map(function(p){return{l:p,v:ok.filter(function(r){return r.posto===p;}).length};}));
+ bars($('#g6'),uniq(rs.map(function(r){return r.situacao;})).sort().map(function(s){return{l:s,v:rs.filter(function(r){return r.situacao===s;}).length};}));
+ var T=resumo(rs);$('#tab').innerHTML='<tr><th>Mês</th><th>Material</th><th>Testes</th><th>Baixados</th><th>% baixados</th><th>Pendentes</th><th>Inválidos</th><th>% reagente</th><th>Dias até baixa</th></tr>'+T.map(function(x){var c=x.re+x.nr+x.iv;return '<tr><td>'+x.ym+'</td><td>'+x.mat.replace(/ \(.*/,'')+'</td><td>'+x.n+'</td><td>'+x.bx+'</td><td>'+pct(x.bx,x.n)+'</td><td>'+x.pe+'</td><td>'+x.inv+'</td><td>'+pct(x.re,c)+'</td><td>'+(x.nd?f1(x.dd/x.nd):'—')+'</td></tr>';}).join('');}
+function baixaResumo(){var T=resumo(filtra()),cab=['ano_mes','material','testes_registrados','baixados','pendentes_de_baixa','nao_encontrados_no_gss','cancelados','documentos_invalidos_forcados','pct_baixados','resultado_reagente','resultado_nr','resultado_invalido','pct_reagente','segundos_testes','dias_medio_ate_baixa'];
+ var L=[cab.join(';')].concat(T.map(function(x){var c=x.re+x.nr+x.iv;return [x.ym,x.mat,x.n,x.bx,x.pe,x.ne,x.ca,x.inv,x.n?f1(100*x.bx/x.n):'',x.re,x.nr,x.iv,c?f1(100*x.re/c):'',x.s2,x.nd?f1(x.dd/x.nd):''].join(';');}));
+ var b=new Blob(['﻿'+L.join('\r\n')],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='resumo_mensal.csv';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500);}
+['fmat','fde','fate'].forEach(function(i){$('#'+i).onchange=desenha;});$('#bresumo').onclick=baixaResumo;
+$('#arq').onchange=function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var rows=parseCSV(r.result);if(!rows.length||!('ano_mes' in rows[0])||!('situacao' in rows[0]))throw 0;carrega(rows,'Seu arquivo: '+f.name);}catch(x){alert('Arquivo não reconhecido. Use o CSV "registros anonimos" exportado pelo sistema.');}};r.readAsText(f,'utf-8');};
+carrega(parseCSV($('#amostra').textContent),'Dados fictícios de exemplo');
+})();
+</script>
+</body>
+</html>

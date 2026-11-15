@@ -1,0 +1,25 @@
+﻿ano_mes;material;testes_registrados;baixados;pendentes_de_baixa;nao_encontrados_no_gss;cancelados;documentos_invalidos_forcados;pct_baixados;resultado_reagente;resultado_nr;resultado_invalido;pct_reagente;segundos_testes;dias_medio_ate_baixa
+2026-06;Benzilpenicilina benzatina 1.200.000 UI;18;17;0;1;0;0;94,4;0;0;0;;0;1,0
+2026-06;Teste COVID-19 (antígeno);25;25;0;0;0;1;100,0;2;22;1;8,0;1;1,5
+2026-06;Teste dengue (NS1, IgG e IgM);60;58;1;1;0;1;96,7;5;53;2;8,3;1;1,7
+2026-06;Teste influenza A e B;50;50;0;0;0;0;100,0;6;43;1;12,0;4;1,3
+2026-07;Benzilpenicilina benzatina 1.200.000 UI;20;20;0;0;0;0;100,0;0;0;0;;0;1,3
+2026-07;Teste COVID-19 (antígeno);29;28;1;0;1;1;96,6;2;26;1;6,9;1;1,6
+2026-07;Teste dengue (NS1, IgG e IgM);70;68;2;0;0;4;97,1;5;64;1;7,1;3;1,4
+2026-07;Teste influenza A e B;70;69;0;1;0;0;98,6;4;60;6;5,7;2;1,4
+2026-08;Benzilpenicilina benzatina 1.200.000 UI;22;22;0;0;0;0;100,0;0;0;0;;0;1,5
+2026-08;Teste COVID-19 (antígeno);35;34;1;0;0;1;97,1;5;29;1;14,3;2;1,5
+2026-08;Teste dengue (NS1, IgG e IgM);54;54;0;0;1;0;100,0;9;43;2;16,7;4;1,6
+2026-08;Teste influenza A e B;39;37;0;2;1;0;94,9;2;33;4;5,1;2;1,5
+2026-09;Benzilpenicilina benzatina 1.200.000 UI;20;20;0;0;0;0;100,0;0;0;0;;0;1,1
+2026-09;Teste COVID-19 (antígeno);40;40;0;0;0;1;100,0;8;30;2;20,0;4;1,0
+2026-09;Teste dengue (NS1, IgG e IgM);34;33;1;0;1;1;97,1;2;31;1;5,9;1;1,7
+2026-09;Teste influenza A e B;20;20;0;0;0;0;100,0;2;17;1;10,0;1;0,7
+2026-10;Benzilpenicilina benzatina 1.200.000 UI;24;24;0;0;0;0;100,0;0;0;0;;0;1,3
+2026-10;Teste COVID-19 (antígeno);45;44;0;1;0;0;97,8;11;32;2;24,4;7;1,2
+2026-10;Teste dengue (NS1, IgG e IgM);24;23;0;1;1;0;95,8;2;21;1;8,3;2;1,9
+2026-10;Teste influenza A e B;15;13;1;1;0;1;86,7;0;15;0;0,0;0;0,9
+2026-11;Benzilpenicilina benzatina 1.200.000 UI;10;8;2;0;0;0;80,0;0;0;0;;0;0,8
+2026-11;Teste COVID-19 (antígeno);18;13;5;0;1;0;72,2;1;17;0;5,6;1;1,5
+2026-11;Teste dengue (NS1, IgG e IgM);9;6;3;0;0;1;66,7;3;6;0;33,3;2;1,2
+2026-11;Teste influenza A e B;5;3;2;0;0;0;60,0;0;5;0;0,0;0;1,7

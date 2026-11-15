@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Registro eletrônico de testes rápidos · demonstração</title>
+<meta name="description" content="Demonstração do registro eletrônico de testes rápidos: trava de dígitos verificadores de CPF e CNS, indicadores e segurança. Todos os dados são fictícios.">
+<style>
+:root{--bg:#fff;--tx:#17262b;--mut:#5b6e73;--card:#eef5f5;--bd:#d3e2e3;--pri:#0e7c86;--pri-tx:#fff;--dk:#0b3b44;--ok:#1b7a3d;--okbg:#e2f3e7;--bad:#b3392a;--badbg:#fbe6e2;--warn:#8a5a00;--warnbg:#fdf0d5}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1a1d;--tx:#e6eff0;--mut:#9bb0b4;--card:#162428;--bd:#27393e;--pri:#3fb3bd;--pri-tx:#06242a;--dk:#cfe9ec;--ok:#6fd08c;--okbg:#14301e;--bad:#ff8f7e;--badbg:#3a1a15;--warn:#f2c46b;--warnbg:#3a2c10}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+.w{max-width:940px;margin:0 auto;padding:0 18px}
+header.hero{background:var(--dk);color:#fff;padding:44px 0 36px}
+@media (prefers-color-scheme:dark){header.hero{background:#0b2a30;color:#e6eff0}}
+h1{font:700 clamp(28px,5vw,40px)/1.15 Georgia,"Times New Roman",serif;margin:0 0 10px}
+h2{font:700 26px/1.2 Georgia,"Times New Roman",serif;color:var(--dk);margin:0 0 10px}
+h3{font-size:17px;margin:18px 0 6px}
+.sub{font-size:18px;max-width:640px;opacity:.92;margin:0 0 18px}
+.tag{display:inline-block;background:#f2a33a;color:#1b2b30;font-weight:700;font-size:13px;padding:3px 10px;border-radius:999px;margin-bottom:14px}
+.btns{display:flex;flex-wrap:wrap;gap:10px}
+a.btn,button.btn{display:inline-block;border:0;border-radius:8px;padding:9px 16px;font:600 15px system-ui,sans-serif;cursor:pointer;text-decoration:none;background:var(--pri);color:var(--pri-tx)}
+a.btn.alt{background:transparent;color:inherit;border:2px solid currentColor}
+section{padding:34px 0;border-bottom:1px solid var(--bd)}
+section:last-of-type{border-bottom:0}
+p{margin:0 0 12px;max-width:720px}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.card{background:var(--card);border-radius:12px;padding:16px}
+.card b{display:block;margin-bottom:4px;color:var(--dk)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px}
+.chip{border:1.5px solid var(--bd);background:var(--card);color:var(--tx);border-radius:999px;padding:6px 12px;font:600 14px system-ui,sans-serif;cursor:pointer}
+.chip.ok{border-color:var(--ok)}.chip.bad{border-color:var(--bad)}.chip.warn{border-color:var(--warn)}
+.chip:focus-visible,input:focus-visible,.btn:focus-visible{outline:3px solid var(--pri);outline-offset:2px}
+label{font-weight:600;font-size:14px;display:block;margin-bottom:4px}
+input[type=text]{width:100%;max-width:420px;font:600 22px ui-monospace,Consolas,monospace;letter-spacing:.04em;padding:10px 12px;border-radius:8px;border:2px solid var(--bd);background:var(--bg);color:var(--tx)}
+input[type=text].ok{border-color:var(--ok)}input[type=text].bad{border-color:var(--bad)}
+.res{margin-top:12px;padding:12px 14px;border-radius:10px;font-weight:600;max-width:720px}
+.res.ok{background:var(--okbg);color:var(--ok)}.res.bad{background:var(--badbg);color:var(--bad)}.res.warn{background:var(--warnbg);color:var(--warn)}.res.vazio{background:var(--card);color:var(--mut);font-weight:400}
+.passos{margin-top:14px;overflow-x:auto}
+table{border-collapse:collapse;font-size:14px}
+th,td{border:1px solid var(--bd);padding:5px 9px;text-align:center;font-family:ui-monospace,Consolas,monospace}
+th{background:var(--card);font-family:system-ui,sans-serif;font-weight:600;color:var(--mut)}
+td.d{color:var(--bad);font-weight:700}
+.cap{font-size:14px;color:var(--mut);margin:6px 0 4px}
+.flow{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));counter-reset:f;margin:12px 0}
+.flow div{background:var(--card);border-radius:12px;padding:14px 14px 14px 52px;position:relative}
+.flow div::before{counter-increment:f;content:counter(f);position:absolute;left:14px;top:14px;width:28px;height:28px;border-radius:50%;background:var(--pri);color:var(--pri-tx);font-weight:700;display:flex;align-items:center;justify-content:center}
+.aviso{background:var(--warnbg);color:var(--warn);border-radius:10px;padding:12px 14px;max-width:720px;margin:12px 0}
+code{font-family:ui-monospace,Consolas,monospace;background:var(--card);padding:1px 5px;border-radius:4px}
+footer{padding:26px 0 40px;color:var(--mut);font-size:14px}
+ul{max-width:720px;padding-left:20px;margin:0 0 12px}li{margin-bottom:4px}
+</style>
+</head>
+<body>
+<header class="hero"><div class="w">
+  <span class="tag">Dados 100% fictícios · nada é enviado nem salvo</span>
+  <h1>Registro eletrônico de testes rápidos</h1>
+  <p class="sub">Da ficha manual ao registro seguro: números de CPF e CNS conferidos na hora, acesso individual com criptografia e dados anonimizados para indicadores.</p>
+  <div class="btns">
+    <a class="btn" href="#trava">Testar a trava de CPF/CNS</a>
+    <a class="btn alt" href="app/enfermagem.html">Demo: enfermagem</a>
+    <a class="btn alt" href="app/farmacia.html">Demo: farmácia</a>
+    <a class="btn alt" href="indicadores/">Painel de indicadores</a>
+  </div>
+</div></header>
+
+<main class="w">
+<section id="trava">
+  <h2>Teste a trava dos dígitos verificadores</h2>
+  <p>Digite um número ou escolha uma amostra. A conferência roda no seu navegador e mostra a conta, passo a passo. Os números abaixo são exemplos para teste, não identificam pessoas.</p>
+  <div class="chips" role="group" aria-label="Amostras">
+    <button class="chip ok" data-v="11144477735">CPF válido · 111.444.777-35</button>
+    <button class="chip bad" data-v="11144477736">CPF inválido · 111.444.777-36</button>
+    <button class="chip ok" data-v="742281246384971">CNS válido · 742 2812 4638 4971</button>
+    <button class="chip bad" data-v="742281240384971">CNS inválido · 742 2812 4038 4971</button>
+    <button class="chip ok" data-v="129077011150018">CNS definitivo válido</button>
+    <button class="chip warn" data-v="742211246384971">Ponto cego do CNS</button>
+  </div>
+  <label for="doc">CPF (11 dígitos) ou CNS (15 dígitos)</label>
+  <input type="text" id="doc" inputmode="numeric" autocomplete="off" placeholder="digite ou cole aqui">
+  <div id="res" class="res vazio" role="status" aria-live="polite">Aguardando um número.</div>
+  <div id="passos" class="passos"></div>
+</section>
+
+<section>
+  <h2>Como a trava funciona</h2>
+  <p>CPF e CNS terminam com dígitos calculados a partir dos demais. Se um dígito for digitado ou lido errado na ficha, a conta deixa de fechar e o sistema avisa antes de salvar.</p>
+  <div class="grid">
+    <div class="card"><b>CPF (11 dígitos)</b>Os 9 primeiros dígitos geram o 10º: multiplicam-se por 10, 9, 8… 2, soma-se, e o resultado vem de <code>(soma × 10) mod 11</code> (10 vira 0). O 11º repete a conta com 10 dígitos e pesos 11 a 2. Sequências como 111.111.111-11 são recusadas.</div>
+    <div class="card"><b>CNS provisório (começa com 7, 8 ou 9)</b>Os 15 dígitos são multiplicados por 15, 14, 13… 1. A soma precisa ser divisível por 11.</div>
+    <div class="card"><b>CNS definitivo (começa com 1 ou 2)</b>Vem do PIS: os 11 primeiros dígitos, com pesos 15 a 5, geram o dígito final, depois do bloco 000 (ou 001, quando o dígito dá 10).</div>
+  </div>
+  <h3>O que o sistema faz com um número inválido</h3>
+  <div class="flow">
+    <div><b>Avisa na hora</b>Mensagem em vermelho assim que o número fica completo.</div>
+    <div><b>Bloqueia o salvamento</b>Só salva se a pessoa marcar, de forma explícita, que quer registrar mesmo assim.</div>
+    <div><b>Marca para revisão</b>O registro fica "A revisar" e não entra na baixa até ser corrigido.</div>
+    <div><b>Pede digitar de novo</b>Campo de confirmação: os dois números precisam ser iguais.</div>
+  </div>
+  <h3>O que a trava não garante</h3>
+  <div class="aviso">
+    <b>Número válido não é número do paciente certo.</b> A conta só mostra que o número é possível. Um erro de vários dígitos ao mesmo tempo passa pela trava em cerca de 1 de cada 100 vezes no CPF e 1 de cada 11 no CNS. No CNS, a troca do 5º dígito nunca é percebida, porque o peso desse dígito (11) é múltiplo do módulo: clique em "Ponto cego do CNS" acima. Por isso o sistema também exige a digitação em dobro, e a conferência do nome na busca do GSS continua obrigatória na baixa.
+  </div>
+</section>
+
+<section>
+  <h2>Dados para indicadores, sem dados pessoais</h2>
+  <p>Na versão da farmácia, o botão <b>Exportar para indicadores</b> gera dois arquivos CSV sem nome, nascimento, CNS ou CPF: um com os registros anonimizados (identificador embaralhado, faixa etária, material, lote, resultado, situação, dias até a baixa) e outro com o resumo mensal por material.</p>
+  <ul>
+    <li>Testes registrados por mês e material, e percentual de reagentes</li>
+    <li>Percentual baixado, pendentes e tempo médio até a baixa</li>
+    <li>Números inválidos que a trava interceptou</li>
+    <li>Uso de caixas e lotes, e distribuição por faixa etária e posto</li>
+  </ul>
+  <div class="btns">
+    <a class="btn" href="indicadores/">Abrir o painel (dados fictícios)</a>
+    <a class="btn alt" style="color:var(--pri)" href="dados/registros_anonimos_exemplo.csv" download>Baixar CSV de exemplo</a>
+    <a class="btn alt" style="color:var(--pri)" href="dados/resumo_mensal_exemplo.csv" download>Baixar resumo mensal</a>
+  </div>
+  <p class="cap" style="margin-top:12px">Mesmo anonimizados, arquivos de unidades pequenas podem permitir identificar pessoas por combinação de data, faixa etária e posto. Use internamente e agregue antes de publicar.</p>
+</section>
+
+<section>
+  <h2>Segurança em camadas</h2>
+  <div class="grid">
+    <div class="card"><b>Login individual</b>Usuário e senha pessoais, troca obrigatória no primeiro acesso, saída automática por inatividade.</div>
+    <div class="card"><b>Criptografia</b>Registros gravados cifrados (AES-256-GCM, chaves protegidas por RSA e senha). Quem abrir a pasta de rede não lê nomes nem números.</div>
+    <div class="card"><b>Privacidade na tela</b>Nomes e números borrados. Cada profissional vê só o que registrou; a baixa no GSS é exclusiva da farmácia.</div>
+    <div class="card"><b>Pasta de rede</b>Permissões por grupo, pasta raiz protegida contra exclusão, backup e auditoria pela TI.</div>
+  </div>
+  <p class="cap" style="margin-top:12px">As demonstrações rodam inteiras no seu navegador, com usuários fictícios indicados na tela de login. Nenhum dado sai do seu computador.</p>
+</section>
+</main>
+
+<footer><div class="w">
+  Demonstração educacional com dados fictícios. Autor: Thiago Abranches, farmacêutico, CRF-SP 91811. Não substitui a validação da gerência, da TI e do encarregado de dados (LGPD) antes de qualquer uso com pacientes reais.
+</div></footer>
+
+<script>
+(function(){
+function soDig(s){return String(s).replace(/\D/g,'');}
+function fmt(d){if(d.length<=11)return d.replace(/^(\d{0,3})(\d{0,3})(\d{0,3})(\d{0,2}).*/,function(_,a,b,c,e){return a+(b?'.'+b:'')+(c?'.'+c:'')+(e?'-'+e:'');});return d.replace(/^(\d{0,3})(\d{0,4})(\d{0,4})(\d{0,4}).*/,function(_,a,b,c,e){return a+(b?' '+b:'')+(c?' '+c:'')+(e?' '+e:'');});}
+function tabela(linhas,destaque){var h='<table>';linhas.forEach(function(l,i){h+='<tr>'+l.map(function(c,j){var t=(j===0||i===0&&false)?'th':'td';var cls=(destaque&&destaque.indexOf(j)>=0&&i>0)?' class="d"':'';return '<'+t+cls+'>'+c+'</'+t+'>';}).join('')+'</tr>';});return h+'</table>';}
+function dvCPF(d,n){var s=0,i,l1=['dígito'],l2=['peso'],l3=['produto'];for(i=0;i<n;i++){var p=parseInt(d[i],10)*(n+1-i);s+=p;l1.push(d[i]);l2.push(n+1-i);l3.push(p);}var r=(s*10)%11,dv=r===10?0:r;return{s:s,r:r,dv:dv,t:tabela([['']].concat([]).slice(0,0).concat([l1,l2,l3]))};}
+function cpf(d){
+ var h='',ok=true,rep=/^(\d)\1+$/.test(d);
+ var a=dvCPF(d,9),b=dvCPF(d,10),i1=parseInt(d[9],10),i2=parseInt(d[10],10);
+ h+='<p class="cap"><b>1º dígito verificador</b> (os 9 primeiros dígitos × pesos 10 a 2)</p>'+a.t+'<p class="cap">Soma = '+a.s+' · (soma × 10) mod 11 = '+a.r+(a.r===10?' (10 vira 0)':'')+' · esperado <b>'+a.dv+'</b>, informado <b>'+i1+'</b> '+(a.dv===i1?'✔':'✘')+'</p>';
+ h+='<p class="cap"><b>2º dígito verificador</b> (os 10 primeiros dígitos × pesos 11 a 2)</p>'+b.t+'<p class="cap">Soma = '+b.s+' · (soma × 10) mod 11 = '+b.r+(b.r===10?' (10 vira 0)':'')+' · esperado <b>'+b.dv+'</b>, informado <b>'+i2+'</b> '+(b.dv===i2?'✔':'✘')+'</p>';
+ if(rep)h+='<p class="cap">Todos os dígitos iguais: o cálculo fecha, mas o sistema recusa essa sequência.</p>';
+ return{ok:!rep&&a.dv===i1&&b.dv===i2,h:h,msg:rep?'CPF inválido: todos os dígitos são iguais.':(a.dv===i1&&b.dv===i2?'CPF válido: os dois dígitos verificadores conferem.':'CPF com dígito verificador inválido. Confira os números.')};}
+function cnsProv(d){var s=0,l1=['dígito'],l2=['peso'],l3=['produto'],i,p;for(i=0;i<15;i++){p=parseInt(d[i],10)*(15-i);s+=p;l1.push(d[i]);l2.push(15-i);l3.push(p);}
+ var ok=s%11===0;return{ok:ok,h:'<p class="cap"><b>CNS provisório</b>: 15 dígitos × pesos 15 a 1; a soma precisa ser múltipla de 11</p>'+tabela([l1,l2,l3])+'<p class="cap">Soma = '+s+' · soma mod 11 = '+(s%11)+' '+(ok?'✔ (divisível por 11)':'✘ (precisava ser 0)')+'</p>'+(d[4]!==undefined?'<p class="cap">Nota: o 5º dígito tem peso 11, então uma troca nele não altera o resto e não é detectada.</p>':''),msg:ok?'CNS válido: a soma ponderada é divisível por 11.':'CNS com dígito verificador inválido. Confira os números.'};}
+function cnsDef(d){var pis=d.slice(0,11),s=0,l1=['dígito'],l2=['peso'],l3=['produto'],i,p;for(i=0;i<11;i++){p=parseInt(pis[i],10)*(15-i);s+=p;l1.push(pis[i]);l2.push(15-i);l3.push(p);}
+ var r=s%11,dv=r===0?0:11-r,esp,ex='';if(dv===10){s+=2;r=s%11;dv=11-r;esp=pis+'001'+dv;ex=' · dígito deu 10: soma + 2 = '+s+', novo resto '+r+', dígito = '+dv+', bloco 001';}else esp=pis+'000'+dv;
+ var ok=esp===d;return{ok:ok,h:'<p class="cap"><b>CNS definitivo</b>: os 11 primeiros dígitos (PIS) × pesos 15 a 5</p>'+tabela([l1,l2,l3])+'<p class="cap">Soma = '+(dv<10&&!ex?s:s)+' · resto = '+(s%11)+ex+' · número esperado <b>'+esp+'</b>, informado <b>'+d+'</b> '+(ok?'✔':'✘')+'</p>',msg:ok?'CNS válido: o número calculado a partir do PIS confere.':'CNS com dígito verificador inválido. Confira os números.'};}
+function analisa(v){var d=soDig(v);
+ if(!d)return{cls:'vazio',msg:'Aguardando um número.',h:''};
+ if(d.length<11)return{cls:'warn',msg:'Faltam '+(11-d.length)+' dígito(s) para CPF ou '+(15-d.length)+' para CNS.',h:''};
+ if(d.length===11){var r=cpf(d);return{cls:r.ok?'ok':'bad',msg:r.msg,h:r.h};}
+ if(d.length<15)return{cls:'warn',msg:'Faltam '+(15-d.length)+' dígito(s) para CNS.',h:''};
+ if(d.length===15){if(/^[12]/.test(d)){var x=cnsDef(d);return{cls:x.ok?'ok':'bad',msg:x.msg,h:x.h};}
+  if(/^[789]/.test(d)){var y=cnsProv(d);return{cls:y.ok?'ok':'bad',msg:y.msg,h:y.h};}
+  return{cls:'bad',msg:'CNS deve começar com 1, 2, 7, 8 ou 9.',h:''};}
+ return{cls:'bad',msg:'Dígitos demais ('+d.length+').',h:''};}
+var el=document.getElementById('doc'),res=document.getElementById('res'),ps=document.getElementById('passos');
+function atualiza(){var d=soDig(el.value).slice(0,16);el.value=fmt(d);var a=analisa(d);res.className='res '+a.cls;res.textContent=a.msg;ps.innerHTML=a.h;el.className=a.cls==='ok'?'ok':(a.cls==='bad'?'bad':'');}
+el.addEventListener('input',atualiza);
+document.querySelectorAll('.chip').forEach(function(b){b.addEventListener('click',function(){el.value=b.dataset.v;atualiza();el.focus();});});
+document.querySelector('.chip').click();
+window.scrollTo(0,0);
+})();
+</script>
+</body>
+</html>
