@@ -53,6 +53,7 @@ textarea.code{font:12px/1.4 ui-monospace,Consolas,monospace;height:150px}
 #lock{position:fixed;inset:0;background:var(--bg);z-index:40;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;text-align:center;padding:20px}
 .bl{color:transparent;text-shadow:0 0 7px var(--tx);filter:blur(1.5px);cursor:pointer;user-select:none;border-radius:4px;background:color-mix(in srgb,var(--mut) 14%,transparent);padding:0 3px;white-space:nowrap}.bl.on{color:inherit;text-shadow:none;filter:none;user-select:text;background:transparent}
 #demo-dica:empty{display:none}
+input.auto{background:var(--bg);color:var(--mut);cursor:not-allowed;pointer-events:none;user-select:none}
 #lg-form{position:relative}
 .balao{background:#fff8e1;border:2px solid #f2a900;border-radius:12px;padding:12px 14px;box-shadow:0 4px 14px rgba(0,0,0,.18);color:#3b2f00;font-size:14px;line-height:1.45}
 .balao h3{margin:0 0 6px;font-size:15px;color:#7a5200}
@@ -142,9 +143,9 @@ body:not(.deslogado) #t-login{display:none}
   <h2 id="reg-titulo">Novo registro</h2>
   <div id="reg-aviso"></div>
   <div class="grid">
-    <div><label for="r-posto">Posto (nome deste computador)</label><input type="text" id="r-posto" placeholder="ex.: SALA_TESTES" autocomplete="off"><div class="msg" id="m-posto"></div></div>
+    <div><label for="r-posto">Posto (nome deste computador) · automático</label><input type="text" id="r-posto" class="auto" readonly tabindex="-1" aria-readonly="true" autocomplete="off"><div class="msg" id="m-posto"></div></div>
     <div><label for="f-mat">Material</label><select id="f-mat"></select><div class="msg" id="i-caixa"></div></div>
-    <div><label for="f-data">Data do teste</label><input type="date" id="f-data"></div>
+    <div><label for="f-data">Data do teste · automática (relógio do computador)</label><input type="date" id="f-data" class="auto" readonly tabindex="-1" aria-readonly="true"></div>
 
     <div class="full"><label for="f-nome">Nome completo</label><input type="text" id="f-nome" name="x_f-nome" autocorrect="off" autocapitalize="off" autocomplete="off" spellcheck="false"></div>
     <div><label for="f-nasc">Data de nascimento (dd/mm/aaaa)</label><input type="text" id="f-nasc" name="x_f-nasc" autocorrect="off" autocapitalize="off" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa" autocomplete="off"><div class="msg" id="m-nasc"></div></div>
@@ -356,7 +357,8 @@ async function trocarSenha(atual,nova){
  await Store.gravaCred(u.id,JSON.stringify({salt:b64(salt),it:KDF_IT,priv:await aesEnc(k2,jwk,u.id),trocar:false}));S.sess.trocar=false;}
 
 /* ---------- eventos, registros e caixas ---------- */
-function posto(){return (lsGet('rt_posto')||'PC').replace(/[^A-Za-z0-9_-]/g,'_');}
+var POSTO_FIXO='';
+function posto(){return (POSTO_FIXO||lsGet('rt_posto')||'NAO_IDENTIFICADO').replace(/[^A-Za-z0-9_-]/g,'_');}
 function oper(){return S.sess?S.sess.nome:'';}
 function novoId(){var a=new Uint8Array(5),t='',i;window.crypto.getRandomValues(a);for(i=0;i<a.length;i++)t+=pad(a[i]%100);return Date.now().toString(36)+t;}
 var PLANOS={caixa:1,caixa_fim:1,uso:1,uso_cancel:1};
@@ -424,7 +426,7 @@ function aba(n){if(!S.sess)return;if(S.sess.trocar)n='senha';['reg','lista','cai
  /*FARM*/if(n==='caixas')renderCaixas();if(n==='baixa')renderBaixa();if(n==='cfg')renderCfg();if(n==='usuarios')renderUsuarios();/*/FARM*/}
 
 function lerForm(){var m=matDe($('#f-mat').value)||{};
- return{material:$('#f-mat').value,dataTeste:$('#f-data').value,nome:$('#f-nome').value.trim().replace(/\s+/g,' ').toUpperCase(),nasc:$('#f-nasc').value.trim(),doc:soDig($('#f-doc').value),
+ return{material:$('#f-mat').value,dataTeste:(S.editId?((recDe(S.editId)||{}).dataTeste||hoje()):hoje()),nome:$('#f-nome').value.trim().replace(/\s+/g,' ').toUpperCase(),nasc:$('#f-nasc').value.trim(),doc:soDig($('#f-doc').value),
   sinan:m.resultados?$('#f-sinan').value.trim():'',prof:m.resultados?$('#f-prof').value.trim():'',res1:m.resultados?$('#f-res1').value:'',data2:m.resultados?$('#f-data2').value:'',res2:m.resultados?$('#f-res2').value:''};}
 function atualizaDocMsg(){var i=infoDoc($('#f-doc').value),m=$('#m-doc');m.textContent=i.msg;m.className='msg '+i.cls;$('#f-doc').classList.toggle('bad',i.cls==='bad');
  $('#w-forca').classList.toggle('hid',!(i.cls==='bad'));if(i.cls!=='bad')$('#f-forca').checked=false;
@@ -653,7 +655,6 @@ function eventos(){
  $('#b-pasta').onclick=escolherPasta;$('#b-bloq').onclick=sair;
  $('#b-senha').onclick=function(){$('#sn-aviso').innerHTML='';aba('senha');};$('#b-trocar').onclick=fazTroca;$('#b-trocar-cancela').onclick=function(){if(S.sess&&!S.sess.trocar)aba('reg');};
  $('#b-entrar').onclick=fazLogin;$('#lg-pass').onkeydown=function(e){if(e.key==='Enter')fazLogin();};$('#lg-user').onkeydown=function(e){if(e.key==='Enter')$('#lg-pass').focus();};
- $('#r-posto').onchange=function(){lsSet('rt_posto',$('#r-posto').value.trim());};
  $('#f-mat').onchange=ajustaMat;
  $('#f-nasc').oninput=function(){this.value=maskNasc(this.value);atualizaNascMsg();};
  $('#f-doc').oninput=function(){this.value=soDig(this.value);atualizaDocMsg();};
@@ -697,14 +698,16 @@ function eventos(){
 }
 async function iniciar(){
  window.__RT={S:S,Store:Store,gerar:typeof gerar==='function'?gerar:null,pasta:pastaEscolhida,emite:emite,novoId:novoId,entrar:entrar,carrega:carrega,criarUsuario:typeof criarUsuario==='function'?criarUsuario:null};
- $('#r-posto').value=lsGet('rt_posto');
+ 
  var qp=null;try{qp=new URLSearchParams(location.search).get('posto');}catch(e){}
- if(qp){qp=qp.replace(/[^A-Za-z0-9_-]/g,'_').slice(0,40);lsSet('rt_posto',qp);$('#r-posto').value=qp;$('#r-posto').readOnly=true;$('#m-posto').className='msg ok';$('#m-posto').textContent='Nome do computador, preenchido sozinho.';}
- else{if(!$('#r-posto').value&&!ENF){$('#r-posto').value='FARMACIA';lsSet('rt_posto','FARMACIA');}if(!$('#r-posto').value){$('#m-posto').className='msg warn';$('#m-posto').textContent='Digite uma vez. Para preencher sozinho, abra pelo atalho do arquivo .bat.';}}
- $('#f-data').value=hoje();$('#l-de').value=hoje();$('#l-ate').value=hoje();
+ if(qp){qp=qp.replace(/[^A-Za-z0-9_-]/g,'_').slice(0,40);POSTO_FIXO=qp;lsSet('rt_posto',qp);}
+ else if(!ENF&&!lsGet('rt_posto')){lsSet('rt_posto','FARMACIA');}
+ $('#r-posto').value=posto();$('#m-posto').className='msg ok';$('#m-posto').textContent='Nome do computador, preenchido sozinho.';
+ if(!qp&&!lsGet('rt_posto')){$('#r-posto').value='NAO_IDENTIFICADO';$('#m-posto').className='msg warn';$('#m-posto').textContent='Computador não identificado. Abra pelo atalho (.bat) para o nome entrar sozinho.';}
+ $('#f-data').value=hoje();setInterval(function(){if(!S.editId&&!document.hidden)$('#f-data').value=hoje();},30000);$('#l-de').value=hoje();$('#l-ate').value=hoje();
  /*FARM*/$('#x-de').value=hoje();$('#x-ate').value=hoje();/*/FARM*/
  preencheMats();eventos();statusPasta();mostraLogin();
- if(window.__DEMO){Store.mode='mem';Store.mem=JSON.parse(JSON.stringify(window.__DEMO.mem));Store.nome='demonstração';$('#l-de').value=window.__DEMO.de;$('#l-ate').value=window.__DEMO.ate;/*FARM*/$('#x-de').value=window.__DEMO.de;$('#x-ate').value=window.__DEMO.ate;/*/FARM*/await pastaEscolhida();var sp=$('#st-pasta');sp.className='chip warn';sp.textContent='Demonstração: nada é salvo';demoBalao();return;}
+ if(window.__DEMO){Store.mode='mem';Store.mem=JSON.parse(JSON.stringify(window.__DEMO.mem));Store.nome='demonstração';$('#l-de').value=window.__DEMO.de;$('#l-ate').value=window.__DEMO.ate;/*FARM*/$('#x-de').value=window.__DEMO.de;$('#x-ate').value=window.__DEMO.ate;/*/FARM*/await pastaEscolhida();var sp=$('#st-pasta');sp.className='chip warn';sp.textContent='Demonstração: nada é salvo';POSTO_FIXO='DEMO-PC01';$('#r-posto').value=POSTO_FIXO;demoBalao();return;}
  var h=Store.sup()?await Store.getH():null;
  if(h){S.h=h;try{var pm=await h.queryPermission({mode:'readwrite'});if(pm==='granted'){Store.dir=h;Store.mode='fs';Store.nome=h.name;await pastaEscolhida();}else{$('#st-pasta').className='chip warn';$('#st-pasta').textContent='Clique em "Escolher pasta de dados" para reconectar';}}catch(e){}}
 }
