@@ -9,6 +9,7 @@ Autor: Thiago Abranches, farmacêutico (CRF-SP 91811).
 | Caminho | O que é |
 |---|---|
 | `index.html` | Explicação e validador interativo da **trava de dígitos verificadores** de CPF e CNS, com a conta passo a passo e amostras (CPF válido e inválido, CNS válido e inválido) |
+| `app/*.html?robo=1` | Abre a demonstração já com o **robozinho guia**: um assistente que preenche o registro devagar, explicando cada passo (ou a pessoa pode preencher sozinha) |
 | `app/enfermagem.html` | Demonstração do registro (perfil enfermagem). Usuário `enfermagem` ou `enfermagem2`, senha `demonstracao1`. Cada usuário vê só os próprios registros |
 | `app/farmacia.html` | Demonstração do perfil farmácia (caixas e lotes, baixa assistida no GSS, usuários, exportação). Usuário `demo`, senha `demonstracao1` |
 | `indicadores/index.html` | Painel de indicadores calculado no navegador a partir do CSV anonimizado (carrega também o seu próprio arquivo, sem enviá-lo a servidor) |
